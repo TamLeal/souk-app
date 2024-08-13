@@ -296,10 +296,10 @@ const ControleCaixaExpedicao = () => {
           {Object.entries(carrinho).map(([chave, { nome, preco, qtd, opcionais }]) => {
             return (
               <li key={chave} className="flex justify-between items-center mb-2">
-                <div className="flex-1">
+                <div className="flex-1 text-left">
                   <span>{nome}</span>
                 </div>
-                <div className="flex items-center flex-1 justify-center">
+                <div className="flex-1 text-center">
                   {editando && (
                     <button
                       onClick={() => editarQuantidade(chave, -1)}
@@ -308,7 +308,7 @@ const ControleCaixaExpedicao = () => {
                       <Minus size={16} />
                     </button>
                   )}
-                  <span className="mx-">x {qtd}</span>
+                  <span className="mx-2">x {qtd}</span>
                   {editando && (
                     <button
                       onClick={() => editarQuantidade(chave, 1)}
@@ -318,11 +318,13 @@ const ControleCaixaExpedicao = () => {
                     </button>
                   )}
                 </div>
-                {opcionais && opcionais.length > 0 && (
-                  <div className="flex-1 text-right text-xs text-gray-600">
-                    Opcionais: {opcionais.join(', ')}
-                  </div>
-                )}
+                <div className="flex-1 text-right">
+                  {opcionais && opcionais.length > 0 && (
+                    <span className="text-xs text-gray-600">
+                      Opcionais: {opcionais.join(', ')}
+                    </span>
+                  )}
+                </div>
               </li>
             );
           })}
