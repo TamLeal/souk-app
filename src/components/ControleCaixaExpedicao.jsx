@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Edit, Trash2, Send, Plus, Minus, ChefHat, ArrowUp, ArrowDown, Pause, Play, Check, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, Edit, Trash2, Send, Plus, Minus, ChefHat, ArrowUp, ArrowDown, Pause, Play, Check, AlertTriangle, Zap } from 'lucide-react';
 
 const opcionais = [
   { id: 1, nome: 'Sem alface' },
@@ -303,11 +303,13 @@ const ControleCaixaExpedicao = () => {
                   </button>
                 )}
               </div>
-              {opcionais && opcionais.length > 0 && (
-                <div className="flex-1 text-right text-xs text-gray-600">
-                  Opcionais: {opcionais.join(', ')}
-                </div>
-              )}
+              <div className="flex-1 text-right text-xs text-gray-600">
+                {opcionais && opcionais.length > 0 ? (
+                  <span>Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block" size={12} /></span>
+                ) : (
+                  <span>&nbsp;</span> // Espaço vazio para manter o alinhamento
+                )}
+              </div>
             </li>
           );
         })}
@@ -331,7 +333,10 @@ const ControleCaixaExpedicao = () => {
           ) : (
             <ul>
               {filaPedidos.map((pedido, index) => (
-                <li key={pedido.id} className={`mb-4 p-3 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'}`}>
+                <li
+                  key={pedido.id}
+                  className={`mb-4 p-3 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'}`}
+                >
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-medium">Pedido #{pedido.id}</h3>
                     <div className="flex space-x-2">
@@ -373,7 +378,7 @@ const ControleCaixaExpedicao = () => {
                         </div>
                         {opcionais && opcionais.length > 0 && (
                           <div className="flex-1 text-right text-xs text-gray-600">
-                            Opcionais: {opcionais.join(', ')}
+                            Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block" size={12} />
                           </div>
                         )}
                       </li>
@@ -414,7 +419,7 @@ const ControleCaixaExpedicao = () => {
                         </div>
                         {opcionais && opcionais.length > 0 && (
                           <div className="flex-1 text-right text-xs text-gray-600">
-                            Opcionais: {opcionais.join(', ')}
+                            Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block" size={12} />
                           </div>
                         )}
                       </li>
