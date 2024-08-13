@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShoppingCart, Edit3, Trash2, Send, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
   Pause, Play, Check, Zap, AlertTriangle
@@ -31,6 +31,21 @@ const ControleCaixaExpedicao = () => {
   const [numeroPedido, setNumeroPedido] = useState(1);
   const [pedidoPrioritario, setPedidoPrioritario] = useState(false);
   const [nomeCliente, setNomeCliente] = useState('');
+  const [contadorFila, setContadorFila] = useState({});
+
+  useEffect(() => {
+    atualizarContadorFila();
+  }, [filaPedidos]);
+
+  const atualizarContadorFila = () => {
+    const novoContador = {};
+    filaPedidos.forEach(pedido => {
+      Object.entries(pedido.itens).forEach(([id, { nome, qtd }]) => {
+        novoContador[nome] = (novoContador[nome] || 0) + qtd;
+      });
+    });
+    setContadorFila(novoContador);
+  };
 
   const adicionarAoCarrinho = (produto, opcionais) => {
     if (!produto) {
@@ -200,6 +215,7 @@ const ControleCaixaExpedicao = () => {
           </div>
         </div>
       </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {produtos.map(produto => (
           <div
@@ -263,19 +279,18 @@ const ControleCaixaExpedicao = () => {
 
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-2">
-        <h2 className="text-lg font-semibold flex items-center">
-  <ShoppingCart className="mr-2" size={20} />
-  Carrinho
-  <input
-    type="text"
-    value={nomeCliente}
-    onChange={(e) => setNomeCliente(e.target.value)}
-    className="ml-1 p-1.5 border border-gray-300 rounded-full text-sm w-36 text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-    placeholder="Nome do cliente"
-    style={{ height: '28px' }}
-  />
-</h2>
-
+          <h2 className="text-lg font-semibold flex items-center">
+            <ShoppingCart className="mr-2" size={20} />
+            Carrinho
+            <input
+              type="text"
+              value={nomeCliente}
+              onChange={(e) => setNomeCliente(e.target.value)}
+              className="ml-1 p-1.5 border border-gray-300 rounded-full text-sm w-36 text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nome do cliente"
+              style={{ height: '28px' }}
+            />
+          </h2>
 
           <div className="flex space-x-2">
             <button
@@ -354,6 +369,18 @@ const ControleCaixaExpedicao = () => {
       </div>
 
       <h1 className="text-3xl font-bold mb-6 text-center">Expedição</h1>
+
+      <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
+        <h2 className="text-lg font-semibold mb-3">Produtos em Fila</h2>
+        <div className="flex flex-wrap justify-between items-center">
+          {produtos.map(produto => (
+            <div key={produto.id} className="flex items-center mr-4 mb-2">
+              <span className="font-medium mr-2">{produto.nome}:</span>
+              <span className="bg-white px-2 py-1 rounded">{contadorFila[produto.nome] || 0}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6 overflow-x-auto">
         <h2 className="text-lg font-semibold mb-2 flex items-center">
