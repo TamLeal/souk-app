@@ -365,7 +365,7 @@ const ControleCaixaExpedicao = () => {
         ) : (
           <div className="flex space-x-4">
             {filaPedidos.map((pedido, index) => (
-              <div key={pedido.id} className={`flex-shrink-0 w-64 p-4 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'}`}>
+              <div key={pedido.id} className={`flex-shrink-0 w-80 p-4 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'}`}>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
                   <div className="text-xs text-gray-500">{pedido.horario}</div>
