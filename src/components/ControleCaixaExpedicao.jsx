@@ -79,11 +79,13 @@ const ControleCaixaExpedicao = () => {
   };
 
   const enviarParaProducao = () => {
+    const horarioAtual = new Date().toLocaleTimeString();
     const novoPedido = {
       id: numeroPedido,
       itens: carrinho,
       total: calcularTotal(carrinho),
-      prioritario: pedidoPrioritario
+      prioritario: pedidoPrioritario,
+      horario: horarioAtual // Adiciona o horário ao pedido
     };
   
     setFilaPedidos(prev => [...prev, novoPedido]);
@@ -152,6 +154,7 @@ const ControleCaixaExpedicao = () => {
 
   const removerPedido = (id) => {
     setFilaPedidos(prev => prev.filter(pedido => pedido.id !== id));
+    setPedidosOnHold(prev => prev.filter(pedido => pedido.id !== id)); // Remover do On Hold se necessário
   };
 
   const togglePrioridade = () => {
@@ -203,7 +206,7 @@ const ControleCaixaExpedicao = () => {
       {mostrarModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Selecione os opcionais</h2>
+            <h2 className="text-lg font-bold mb-4">Opcionais para {produtoSelecionado?.nome}</h2>
             <div className="mb-4">
               {opcionais.map(opcional => (
                 <div key={opcional.id} className="mb-2">
@@ -305,7 +308,7 @@ const ControleCaixaExpedicao = () => {
               </div>
               <div className="flex-1 text-right text-xs text-gray-600">
                 {opcionais && opcionais.length > 0 ? (
-                  <span>Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block" size={12} /></span>
+                  <span>Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block text-red-500 border border-red-500 rounded-full" size={12} /></span>
                 ) : (
                   <span>&nbsp;</span> // Espaço vazio para manter o alinhamento
                 )}
@@ -339,6 +342,7 @@ const ControleCaixaExpedicao = () => {
                 >
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-medium">Pedido #{pedido.id}</h3>
+                    <div className="text-xs text-gray-500">{pedido.horario}</div> {/* Exibe o horário */}
                     <div className="flex space-x-2">
                       <button
                         onClick={() => moverPedido(index, -1)}
@@ -378,7 +382,7 @@ const ControleCaixaExpedicao = () => {
                         </div>
                         {opcionais && opcionais.length > 0 && (
                           <div className="flex-1 text-right text-xs text-gray-600">
-                            Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block" size={12} />
+                            Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block text-red-500 border border-red-500 rounded-full" size={12} />
                           </div>
                         )}
                       </li>
@@ -403,13 +407,23 @@ const ControleCaixaExpedicao = () => {
                 <li key={pedido.id} className="mb-4 p-3 bg-blue-100 rounded-lg shadow">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-medium">Pedido #{pedido.id}</h3>
-                    <button
-                      onClick={() => togglePedidoOnHold(pedido)}
-                      className="p-1 rounded hover:bg-blue-200"
-                      title="Retomar pedido"
-                    >
-                      <Play size={16} />
-                    </button>
+                    <div className="text-xs text-gray-500">{pedido.horario}</div> {/* Exibe o horário */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => togglePedidoOnHold(pedido)}
+                        className="p-1 rounded hover:bg-blue-200"
+                        title="Retomar pedido"
+                      >
+                        <Play size={16} />
+                      </button>
+                      <button
+                        onClick={() => removerPedido(pedido.id)}
+                        className="p-1 rounded hover:bg-gray-200"
+                        title="Pedido entregue"
+                      >
+                        <Check size={16} />
+                      </button>
+                    </div>
                   </div>
                   <ul>
                     {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
@@ -419,7 +433,7 @@ const ControleCaixaExpedicao = () => {
                         </div>
                         {opcionais && opcionais.length > 0 && (
                           <div className="flex-1 text-right text-xs text-gray-600">
-                            Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block" size={12} />
+                            Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block text-red-500 border border-red-500 rounded-full" size={12} />
                           </div>
                         )}
                       </li>
