@@ -81,6 +81,7 @@ const ControleCaixaExpedicao = () => {
   const apagarPedido = () => {
     setCarrinho({});
     setPedidoPrioritario(false);
+    setNomeCliente('');
   };
 
   const enviarParaProducao = () => {
@@ -199,18 +200,6 @@ const ControleCaixaExpedicao = () => {
           </div>
         </div>
       </div>
-
-      <div className="mb-4">
-        <label className="font-medium mr-2">Nome do Cliente:</label>
-        <input
-          type="text"
-          value={nomeCliente}
-          onChange={(e) => setNomeCliente(e.target.value)}
-          className="p-2 border rounded"
-          placeholder="Digite o nome do cliente"
-        />
-      </div>
-
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {produtos.map(produto => (
           <div
@@ -274,10 +263,20 @@ const ControleCaixaExpedicao = () => {
 
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-lg font-semibold flex items-center">
-            <ShoppingCart className="mr-2" size={20} />
-            Carrinho
-          </h2>
+        <h2 className="text-lg font-semibold flex items-center">
+  <ShoppingCart className="mr-2" size={20} />
+  Carrinho
+  <input
+    type="text"
+    value={nomeCliente}
+    onChange={(e) => setNomeCliente(e.target.value)}
+    className="ml-1 p-1.5 border border-gray-300 rounded-full text-sm w-36 text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    placeholder="Nome do cliente"
+    style={{ height: '28px' }}
+  />
+</h2>
+
+
           <div className="flex space-x-2">
             <button
               onClick={togglePrioridade}
@@ -310,6 +309,7 @@ const ControleCaixaExpedicao = () => {
             </button>
           </div>
         </div>
+
         <ul>
           {Object.entries(carrinho).map(([chave, { nome, preco, qtd, opcionais }]) => {
             return (
