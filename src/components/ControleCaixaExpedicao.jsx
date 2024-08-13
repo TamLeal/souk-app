@@ -355,42 +355,93 @@ const ControleCaixaExpedicao = () => {
 
       <h1 className="text-3xl font-bold mb-6 text-center">Expedição</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-6">
-        <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '300px' }}>
+      <div className="bg-gray-100 p-4 rounded-lg shadow mb-6 overflow-x-auto">
+        <h2 className="text-lg font-semibold mb-2 flex items-center">
+          <ChefHat className="mr-2" size={20} />
+          Fila de Pedidos
+        </h2>
+        {filaPedidos.length === 0 ? (
+          <p>Nenhum pedido na fila.</p>
+        ) : (
+          <div className="flex space-x-4">
+            {filaPedidos.map((pedido, index) => (
+              <div key={pedido.id} className={`flex-shrink-0 w-64 p-4 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'}`}>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
+                  <div className="text-xs text-gray-500">{pedido.horario}</div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => moverPedido(index, -1)}
+                      className="p-1 rounded hover:bg-gray-200"
+                      disabled={index === 0}
+                    >
+                      <ArrowUp size={16} />
+                    </button>
+                    <button
+                      onClick={() => moverPedido(index, 1)}
+                      className="p-1 rounded hover:bg-gray-200"
+                      disabled={index === filaPedidos.length - 1}
+                    >
+                      <ArrowDown size={16} />
+                    </button>
+                    <button
+                      onClick={() => togglePedidoOnHold(pedido)}
+                      className="p-1 rounded hover:bg-gray-200"
+                      title="Colocar em espera"
+                    >
+                      <Pause size={16} />
+                    </button>
+                    <button
+                      onClick={() => removerPedido(pedido.id)}
+                      className="p-1 rounded hover:bg-gray-200"
+                      title="Pedido entregue"
+                    >
+                      <Check size={16} />
+                    </button>
+                  </div>
+                </div>
+                <ul>
+                  {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
+                    <li key={id} className="flex justify-between items-center mb-2">
+                      <div className="flex-1">
+                        <span>{nome} x {qtd}</span>
+                      </div>
+                      {opcionais && opcionais.length > 0 && (
+                        <div className="flex-1 text-right text-xs text-gray-600">
+                          Opcionais: {opcionais.join(', ')}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
           <h2 className="text-lg font-semibold mb-2 flex items-center">
-            <ChefHat className="mr-2" size={20} />
-            Fila de Pedidos
+            <Pause className="mr-2" size={20} />
+            Pedidos em Espera (On Hold)
           </h2>
-          {filaPedidos.length === 0 ? (
-            <p>Nenhum pedido na fila.</p>
+          {pedidosOnHold.length === 0 ? (
+            <p>Nenhum pedido em espera.</p>
           ) : (
             <ul>
-              {filaPedidos.map((pedido, index) => (
-                <li key={pedido.id} className={`mb-4 p-3 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'}`}>
+              {pedidosOnHold.map((pedido) => (
+                <li key={pedido.id} className="mb-4 p-3 bg-blue-100 rounded-lg shadow">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
                     <div className="text-xs text-gray-500">{pedido.horario}</div>
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => moverPedido(index, -1)}
-                        className="p-1 rounded hover:bg-gray-200"
-                        disabled={index === 0}
+                        onClick={() => moverParaEsquecidos(pedido)}
+                        className="p-1 rounded hover:bg-yellow-200"
+                        title="Mover para Esquecidos"
                       >
-                        <ArrowUp size={16} />
-                      </button>
-                      <button
-                        onClick={() => moverPedido(index, 1)}
-                        className="p-1 rounded hover:bg-gray-200"
-                        disabled={index === filaPedidos.length - 1}
-                      >
-                        <ArrowDown size={16} />
-                      </button>
-                      <button
-                        onClick={() => togglePedidoOnHold(pedido)}
-                        className="p-1 rounded hover:bg-gray-200"
-                        title="Colocar em espera"
-                      >
-                        <Pause size={16} />
+                        <Zap size={16} />
                       </button>
                       <button
                         onClick={() => removerPedido(pedido.id)}
@@ -421,99 +472,46 @@ const ControleCaixaExpedicao = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
-          <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
-            <h2 className="text-lg font-semibold mb-2 flex items-center">
-              <Pause className="mr-2" size={20} />
-              Pedidos em Espera (On Hold)
-            </h2>
-            {pedidosOnHold.length === 0 ? (
-              <p>Nenhum pedido em espera.</p>
-            ) : (
-              <ul>
-                {pedidosOnHold.map((pedido) => (
-                  <li key={pedido.id} className="mb-4 p-3 bg-blue-100 rounded-lg shadow">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
-                      <div className="text-xs text-gray-500">{pedido.horario}</div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => moverParaEsquecidos(pedido)}
-                          className="p-1 rounded hover:bg-yellow-200"
-                          title="Mover para Esquecidos"
-                        >
-                          <Zap size={16} />
-                        </button>
-                        <button
-                          onClick={() => removerPedido(pedido.id)}
-                          className="p-1 rounded hover:bg-gray-200"
-                          title="Pedido entregue"
-                        >
-                          <Check size={16} />
-                        </button>
-                      </div>
-                    </div>
-                    <ul>
-                      {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
-                        <li key={id} className="flex justify-between items-center mb-2">
-                          <div className="flex-1">
-                            <span>{nome} x {qtd}</span>
+        <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
+          <h2 className="text-lg font-semibold mb-2 flex items-center">
+            <Zap className="mr-2" size={20} />
+            Esqueceram de Mim
+          </h2>
+          {esquecidos.length === 0 ? (
+            <p>Nenhum pedido esquecido.</p>
+          ) : (
+            <ul>
+              {esquecidos.map((pedido) => (
+                <li key={pedido.id} className="mb-4 p-3 bg-yellow-100 rounded-lg shadow">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
+                    <div className="text-xs text-gray-500">{pedido.horario}</div>
+                    <button
+                      onClick={() => removerPedido(pedido.id)}
+                      className="p-1 rounded hover:bg-gray-200"
+                      title="Pedido entregue"
+                    >
+                      <Check size={16} />
+                    </button>
+                  </div>
+                  <ul>
+                    {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
+                      <li key={id} className="flex justify-between items-center mb-2">
+                        <div className="flex-1">
+                          <span>{nome} x {qtd}</span>
+                        </div>
+                        {opcionais && opcionais.length > 0 && (
+                          <div className="flex-1 text-right text-xs text-gray-600">
+                            Opcionais: {opcionais.join(', ')}
                           </div>
-                          {opcionais && opcionais.length > 0 && (
-                            <div className="flex-1 text-right text-xs text-gray-600">
-                              Opcionais: {opcionais.join(', ')}
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
-            <h2 className="text-lg font-semibold mb-2 flex items-center">
-              <Zap className="mr-2" size={20} />
-              Esqueceram de Mim
-            </h2>
-            {esquecidos.length === 0 ? (
-              <p>Nenhum pedido esquecido.</p>
-            ) : (
-              <ul>
-                {esquecidos.map((pedido) => (
-                  <li key={pedido.id} className="mb-4 p-3 bg-yellow-100 rounded-lg shadow">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
-                      <div className="text-xs text-gray-500">{pedido.horario}</div>
-                      <button
-                        onClick={() => removerPedido(pedido.id)}
-                        className="p-1 rounded hover:bg-gray-200"
-                        title="Pedido entregue"
-                      >
-                        <Check size={16} />
-                      </button>
-                    </div>
-                    <ul>
-                      {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
-                        <li key={id} className="flex justify-between items-center mb-2">
-                          <div className="flex-1">
-                            <span>{nome} x {qtd}</span>
-                          </div>
-                          {opcionais && opcionais.length > 0 && (
-                            <div className="flex-1 text-right text-xs text-gray-600">
-                              Opcionais: {opcionais.join(', ')}
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
