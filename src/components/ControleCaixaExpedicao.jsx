@@ -30,6 +30,7 @@ const ControleCaixaExpedicao = () => {
   const [historicoVendas, setHistoricoVendas] = useState({});
   const [numeroPedido, setNumeroPedido] = useState(1);
   const [pedidoPrioritario, setPedidoPrioritario] = useState(false);
+  const [nomeCliente, setNomeCliente] = useState('');
 
   const adicionarAoCarrinho = (produto, opcionais) => {
     if (!produto) {
@@ -83,8 +84,14 @@ const ControleCaixaExpedicao = () => {
   };
 
   const enviarParaProducao = () => {
+    if (!nomeCliente.trim()) {
+      alert("Por favor, insira o nome do cliente.");
+      return;
+    }
+
     const novoPedido = {
       id: numeroPedido,
+      cliente: nomeCliente,
       itens: carrinho,
       total: calcularTotal(carrinho),
       prioritario: pedidoPrioritario,
@@ -95,17 +102,17 @@ const ControleCaixaExpedicao = () => {
     setNumeroPedido(prev => prev + 1);
 
     setHistoricoVendas(prev => {
-  const novoHistorico = { ...prev };
-  Object.entries(carrinho).forEach(([id, { qtd }]) => {
-    const produtoId = parseInt(id.split('-')[0]);
-    novoHistorico[produtoId] = (novoHistorico[produtoId] || 0) + qtd;
-  });
-  return novoHistorico;
-});
-
+      const novoHistorico = { ...prev };
+      Object.entries(carrinho).forEach(([id, { qtd }]) => {
+        const produtoId = parseInt(id.split('-')[0]);
+        novoHistorico[produtoId] = (novoHistorico[produtoId] || 0) + qtd;
+      });
+      return novoHistorico;
+    });
 
     setCarrinho({});
     setPedidoPrioritario(false);
+    setNomeCliente(''); // Limpa o campo do nome do cliente
   };
 
   const calcularTotal = (itens) => {
@@ -191,6 +198,17 @@ const ControleCaixaExpedicao = () => {
             <span className="bg-white px-2 py-1 rounded font-bold">R$ {faturamentoTotal.toFixed(2)}</span>
           </div>
         </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="font-medium mr-2">Nome do Cliente:</label>
+        <input
+          type="text"
+          value={nomeCliente}
+          onChange={(e) => setNomeCliente(e.target.value)}
+          className="p-2 border rounded"
+          placeholder="Digite o nome do cliente"
+        />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -350,7 +368,7 @@ const ControleCaixaExpedicao = () => {
               {filaPedidos.map((pedido, index) => (
                 <li key={pedido.id} className={`mb-4 p-3 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'}`}>
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium">Pedido #{pedido.id}</h3>
+                    <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
                     <div className="text-xs text-gray-500">{pedido.horario}</div>
                     <div className="flex space-x-2">
                       <button
@@ -373,13 +391,6 @@ const ControleCaixaExpedicao = () => {
                         title="Colocar em espera"
                       >
                         <Pause size={16} />
-                      </button>
-                      <button
-                        onClick={() => moverParaEsquecidos(pedido)}
-                        className="p-1 rounded hover:bg-yellow-200"
-                        title="Mover para Esquecidos"
-                      >
-                        <Zap size={16} />
                       </button>
                       <button
                         onClick={() => removerPedido(pedido.id)}
@@ -423,15 +434,15 @@ const ControleCaixaExpedicao = () => {
                 {pedidosOnHold.map((pedido) => (
                   <li key={pedido.id} className="mb-4 p-3 bg-blue-100 rounded-lg shadow">
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium">Pedido #{pedido.id}</h3>
+                      <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
                       <div className="text-xs text-gray-500">{pedido.horario}</div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => togglePedidoOnHold(pedido)}
-                          className="p-1 rounded hover:bg-blue-200"
-                          title="Retomar pedido"
+                          onClick={() => moverParaEsquecidos(pedido)}
+                          className="p-1 rounded hover:bg-yellow-200"
+                          title="Mover para Esquecidos"
                         >
-                          <Play size={16} />
+                          <Zap size={16} />
                         </button>
                         <button
                           onClick={() => removerPedido(pedido.id)}
@@ -474,7 +485,7 @@ const ControleCaixaExpedicao = () => {
                 {esquecidos.map((pedido) => (
                   <li key={pedido.id} className="mb-4 p-3 bg-yellow-100 rounded-lg shadow">
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium">Pedido #{pedido.id}</h3>
+                      <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
                       <div className="text-xs text-gray-500">{pedido.horario}</div>
                       <button
                         onClick={() => removerPedido(pedido.id)}
