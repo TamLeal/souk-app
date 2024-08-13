@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Edit, Trash2, Send, Plus, Minus, ChefHat, ArrowUp, ArrowDown, Pause, Play, Check, AlertTriangle, XCircle, Zap } from 'lucide-react';
+import {
+  ShoppingCart, Edit3, Trash2, Send, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
+  Pause, Play, Check, Zap, AlertTriangle
+} from 'lucide-react';
 
 const opcionais = [
   { id: 1, nome: 'Sem alface' },
@@ -9,10 +12,10 @@ const opcionais = [
 ];
 
 const produtos = [
-  { id: 1, nome: 'KFT', preco: 15 },
-  { id: 2, nome: 'Falafel', preco: 12 },
-  { id: 3, nome: 'Marys', preco: 18 },
-  { id: 4, nome: 'Fritas', preco: 8 },
+  { id: 1, nome: 'KFT', preco: 15, cor: 'bg-red-200' },
+  { id: 2, nome: 'Falafel', preco: 12, cor: 'bg-yellow-200' },
+  { id: 3, nome: 'Marys', preco: 18, cor: 'bg-green-200' },
+  { id: 4, nome: 'Fritas', preco: 8, cor: 'bg-yellow-100' },
 ];
 
 const ControleCaixaExpedicao = () => {
@@ -44,8 +47,8 @@ const ControleCaixaExpedicao = () => {
         [chaveProduto]: {
           ...produto,
           qtd: (itemExistente?.qtd || 0) + 1,
-          opcionais: [...(itemExistente?.opcionais || []), ...opcionais]
-        }
+          opcionais: [...(itemExistente?.opcionais || []), ...opcionais],
+        },
       };
 
       return atualizado;
@@ -56,7 +59,7 @@ const ControleCaixaExpedicao = () => {
 
   const abrirModal = (produto) => {
     setProdutoSelecionado(produto);
-    setOpcionaisSelecionados([]); // Resetar opcionais selecionados ao abrir o modal
+    setOpcionaisSelecionados([]);
     setMostrarModal(true);
   };
 
@@ -80,25 +83,26 @@ const ControleCaixaExpedicao = () => {
   };
 
   const enviarParaProducao = () => {
-    const horario = new Date().toLocaleTimeString();
     const novoPedido = {
       id: numeroPedido,
       itens: carrinho,
       total: calcularTotal(carrinho),
       prioritario: pedidoPrioritario,
-      horario: horario,
+      horario: new Date().toLocaleTimeString(),
     };
 
     setFilaPedidos(prev => [...prev, novoPedido]);
     setNumeroPedido(prev => prev + 1);
 
     setHistoricoVendas(prev => {
-      const novoHistorico = { ...prev };
-      Object.entries(carrinho).forEach(([id, { qtd }]) => {
-        novoHistorico[id] = (novoHistorico[id] || 0) + qtd;
-      });
-      return novoHistorico;
-    });
+  const novoHistorico = { ...prev };
+  Object.entries(carrinho).forEach(([id, { qtd }]) => {
+    const produtoId = parseInt(id.split('-')[0]);
+    novoHistorico[produtoId] = (novoHistorico[produtoId] || 0) + qtd;
+  });
+  return novoHistorico;
+});
+
 
     setCarrinho({});
     setPedidoPrioritario(false);
@@ -106,7 +110,7 @@ const ControleCaixaExpedicao = () => {
 
   const calcularTotal = (itens) => {
     return Object.entries(itens).reduce((total, [id, { qtd }]) => {
-      const produto = produtos.find(p => p.id === parseInt(id));
+      const produto = produtos.find(p => p.id === parseInt(id.split('-')[0]));
       if (produto) {
         return total + (produto.preco * qtd);
       } else {
@@ -118,7 +122,7 @@ const ControleCaixaExpedicao = () => {
 
   const calcularFaturamentoTotal = () => {
     return Object.entries(historicoVendas).reduce((total, [id, qtd]) => {
-      const produto = produtos.find(p => p.id === parseInt(id));
+      const produto = produtos.find(p => p.id === parseInt(id.split('-')[0]));
       if (produto) {
         return total + (produto.preco * qtd);
       } else {
@@ -151,7 +155,7 @@ const ControleCaixaExpedicao = () => {
   };
 
   const moverParaEsquecidos = (pedido) => {
-    setFilaPedidos(prev => prev.filter(p => p.id !== pedido.id));
+    setPedidosOnHold(prev => prev.filter(p => p.id !== pedido.id));
     setEsquecidos(prev => [...prev, pedido]);
   };
 
@@ -172,7 +176,7 @@ const ControleCaixaExpedicao = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center">Controle de Caixa</h1>
-      
+
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
         <h2 className="text-lg font-semibold mb-3">Resumo do Evento</h2>
         <div className="flex flex-wrap justify-between items-center">
@@ -188,25 +192,29 @@ const ControleCaixaExpedicao = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {produtos.map(produto => (
           <div
             key={produto.id}
-            className="bg-white p-2 rounded-lg shadow hover:shadow-md transition-shadow text-left border border-gray-200"
+            className={`${produto.cor} p-2 rounded-lg shadow hover:shadow-md transition-shadow text-left border border-gray-200 cursor-pointer`}
+            onClick={() => adicionarAoCarrinho(produto, [])}
           >
             <h3 className="text-sm font-semibold">{produto.nome}</h3>
             <p className="text-gray-600 text-xs">R$ {produto.preco.toFixed(2)}</p>
             <button
-              onClick={() => abrirModal(produto)}
-              className="mt-2 p-1 bg-blue-500 text-white rounded"
+              onClick={(e) => {
+                e.stopPropagation(); // Impede que o clique no botão envie o produto ao carrinho diretamente
+                abrirModal(produto);
+              }}
+              className="mt-2 p-1 bg-white text-black rounded"
             >
-              <ShoppingCart size={16} />
+              <Edit3 size={16} />
             </button>
           </div>
         ))}
       </div>
-      
+
       {mostrarModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -218,7 +226,7 @@ const ControleCaixaExpedicao = () => {
                     <input
                       type="checkbox"
                       value={opcional.nome}
-                      onChange={() => setOpcionaisSelecionados(prev => 
+                      onChange={() => setOpcionaisSelecionados(prev =>
                         prev.includes(opcional.nome)
                           ? prev.filter(item => item !== opcional.nome)
                           : [...prev, opcional.nome]
@@ -245,7 +253,7 @@ const ControleCaixaExpedicao = () => {
           </div>
         </div>
       )}
-      
+
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-lg font-semibold flex items-center">
@@ -265,7 +273,7 @@ const ControleCaixaExpedicao = () => {
               className="p-1 rounded hover:bg-gray-200"
               title={editando ? "Concluir Edição" : "Editar Pedido"}
             >
-              <Edit size={20} />
+              <Edit3 size={20} />
             </button>
             <button
               onClick={apagarPedido}
@@ -293,16 +301,16 @@ const ControleCaixaExpedicao = () => {
                 </div>
                 <div className="flex items-center flex-1 justify-center">
                   {editando && (
-                    <button 
+                    <button
                       onClick={() => editarQuantidade(chave, -1)}
                       className="p-1 rounded hover:bg-gray-200"
                     >
                       <Minus size={16} />
                     </button>
                   )}
-                  <span className="mx-2">x {qtd}</span>
+                  <span className="mx-">x {qtd}</span>
                   {editando && (
-                    <button 
+                    <button
                       onClick={() => editarQuantidade(chave, 1)}
                       className="p-1 rounded hover:bg-gray-200"
                     >
@@ -312,7 +320,7 @@ const ControleCaixaExpedicao = () => {
                 </div>
                 {opcionais && opcionais.length > 0 && (
                   <div className="flex-1 text-right text-xs text-gray-600">
-                    Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block text-red-500 border border-red-500 rounded-full" size={12} />
+                    Opcionais: {opcionais.join(', ')}
                   </div>
                 )}
               </li>
@@ -327,8 +335,8 @@ const ControleCaixaExpedicao = () => {
 
       <h1 className="text-3xl font-bold mb-6 text-center">Expedição</h1>
 
-      <div className="grid grid-cols-1 gap-6">
-        <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '400px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-6">
+        <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '300px' }}>
           <h2 className="text-lg font-semibold mb-2 flex items-center">
             <ChefHat className="mr-2" size={20} />
             Fila de Pedidos
@@ -366,10 +374,10 @@ const ControleCaixaExpedicao = () => {
                       </button>
                       <button
                         onClick={() => moverParaEsquecidos(pedido)}
-                        className="p-1 rounded hover:bg-gray-200"
-                        title="Esqueceram de Mim"
+                        className="p-1 rounded hover:bg-yellow-200"
+                        title="Mover para Esquecidos"
                       >
-                        <XCircle size={16} />
+                        <Zap size={16} />
                       </button>
                       <button
                         onClick={() => removerPedido(pedido.id)}
@@ -388,7 +396,7 @@ const ControleCaixaExpedicao = () => {
                         </div>
                         {opcionais && opcionais.length > 0 && (
                           <div className="flex-1 text-right text-xs text-gray-600">
-                            Opcionais: {opcionais.join(', ')} <Zap className="animate-pulse inline-block text-red-500 border border-red-500 rounded-full" size={12} />
+                            Opcionais: {opcionais.join(', ')}
                           </div>
                         )}
                       </li>
