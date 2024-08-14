@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   ShoppingCart, Edit3, Trash2, Send, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
-  Pause, Play, Check, Zap, AlertTriangle
+  Pause, Play, Check, Zap, AlertTriangle, Download
 } from 'lucide-react';
+import { saveAs } from 'file-saver';
+import Papa from 'papaparse';
 
 const opcionais = [
   { id: 1, nome: 'Sem alface' },
@@ -192,6 +194,49 @@ const ControleCaixaExpedicao = () => {
     setPedidoPrioritario(!pedidoPrioritario);
   };
 
+  const gerarDadosCSV = (filaPedidos) => {
+    return filaPedidos.map(pedido => {
+      const produtoQuantidade = produtos.map(produto => {
+        const itemPedido = Object.values(pedido.itens).find(item => item.nome === produto.nome);
+        return itemPedido ? itemPedido.qtd : 0;
+      });
+
+      return {
+        numero_pedido: pedido.id,
+        nome_cliente: pedido.cliente,
+        horario_pedido: pedido.horario,
+        ...produtoQuantidade.reduce((acc, qtd, index) => {
+          acc[produtos[index].nome] = qtd;
+          return acc;
+        }, {})
+      };
+    });
+  };
+
+  const gerarConsolidadoCSV = (historicoVendas) => {
+    return Object.entries(historicoVendas).map(([id, qtd]) => {
+      const produto = produtos.find(p => p.id === parseInt(id));
+      return {
+        produto: produto.nome,
+        quantidade: qtd,
+        total_faturado: `R$ ${(produto.preco * qtd).toFixed(2)}`
+      };
+    });
+  };
+
+  const exportarCSV = () => {
+    const dadosPedidos = gerarDadosCSV(filaPedidos);
+    const consolidadoProdutos = gerarConsolidadoCSV(historicoVendas);
+
+    const csvPedidos = Papa.unparse(dadosPedidos);
+    const csvConsolidado = Papa.unparse(consolidadoProdutos);
+
+    const csvCompleto = `${csvPedidos}\n\n--- Consolidado ---\n\n${csvConsolidado}`;
+
+    const blob = new Blob([csvCompleto], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `exportacao_pedidos_consolidado_${new Date().toISOString()}.csv`);
+  };
+
   const totalItens = Object.values(carrinho).reduce((acc, { qtd }) => acc + qtd, 0);
   const totalValor = calcularTotal(carrinho);
   const faturamentoTotal = calcularFaturamentoTotal();
@@ -201,7 +246,12 @@ const ControleCaixaExpedicao = () => {
       <h1 className="text-3xl font-bold mb-6 text-center">Controle de Caixa</h1>
 
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-semibold mb-3">Resumo do Evento</h2>
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-lg font-semibold">Resumo do Evento</h2>
+          <button onClick={exportarCSV} className="p-1 rounded hover:bg-gray-200">
+            <Download size={20} />
+          </button>
+        </div>
         <div className="flex flex-wrap justify-between items-center">
           {produtos.map(produto => (
             <div key={produto.id} className="flex items-center mr-4 mb-2">
