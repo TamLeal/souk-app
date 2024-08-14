@@ -3,6 +3,7 @@ import {
   ShoppingCart, Edit3, Trash2, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
   Pause, Check, Zap, AlertTriangle, Download, Settings, Send, Clock
 } from 'lucide-react';
+import Switch from "react-switch"; // Importando react-switch para os toggles
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
 import { CiFries } from "react-icons/ci";
@@ -107,6 +108,20 @@ const ControleCaixaExpedicao = () => {
     localStorage.setItem('numeroPedido', numeroPedido);
   }, [numeroPedido]);
 
+  const calcularFaturamentoTotal = () => {
+    return Object.entries(historicoVendas).reduce((total, [id, qtd]) => {
+      const produto = produtos.find(p => p.id === parseInt(id.split('-')[0]));
+      if (produto) {
+        return total + (produto.preco * qtd);
+      } else {
+        console.error(`Produto com ID ${id} não encontrado!`);
+        return total;
+      }
+    }, 0);
+  };
+
+  const faturamentoTotal = calcularFaturamentoTotal(); // Definindo faturamentoTotal corretamente
+
   useEffect(() => {
     if (configExpedicao.subidaAutomatica) {
       const intervalo = setInterval(() => {
@@ -168,7 +183,6 @@ const ControleCaixaExpedicao = () => {
     setMostrarModal(false);
     setEditandoItem(null);
 };
-
 
   const abrirModal = (produto) => {
     setProdutoSelecionado(produto);
@@ -247,18 +261,6 @@ const ControleCaixaExpedicao = () => {
 
   const calcularTotal = (itens) => {
     return Object.entries(itens).reduce((total, [id, { qtd }]) => {
-      const produto = produtos.find(p => p.id === parseInt(id.split('-')[0]));
-      if (produto) {
-        return total + (produto.preco * qtd);
-      } else {
-        console.error(`Produto com ID ${id} não encontrado!`);
-        return total;
-      }
-    }, 0);
-  };
-
-  const calcularFaturamentoTotal = () => {
-    return Object.entries(historicoVendas).reduce((total, [id, qtd]) => {
       const produto = produtos.find(p => p.id === parseInt(id.split('-')[0]));
       if (produto) {
         return total + (produto.preco * qtd);
@@ -446,8 +448,8 @@ const ControleCaixaExpedicao = () => {
       </div>
 
       {mostrarModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg relative z-50">
             <h2 className="text-lg font-bold mb-4">Opcionais para {produtoSelecionado?.nome}</h2>
             <div className="mb-4">
               {opcionais.map(opcional => (
@@ -600,11 +602,18 @@ const ControleCaixaExpedicao = () => {
             <div className="flex flex-col space-y-4">
               <div className="flex items-center space-x-4">
                 <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="subidaAutomatica"
+                  <Switch
+                    onChange={() => setConfigExpedicao(prev => ({ ...prev, subidaAutomatica: !prev.subidaAutomatica }))}
                     checked={configExpedicao.subidaAutomatica}
-                    onChange={handleConfigChange}
+                    onColor="#86d3ff"
+                    onHandleColor="#2693e6"
+                    handleDiameter={22}
+                    uncheckedIcon={false}
+                    checkedIcon={false}
+                    boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                    activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                    height={16}
+                    width={38}
                   />
                   <span>Subida automática após</span>
                 </label>
@@ -622,11 +631,18 @@ const ControleCaixaExpedicao = () => {
 
               <div className="flex items-center space-x-4">
                 <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="bordaPiscante"
+                  <Switch
+                    onChange={() => setConfigExpedicao(prev => ({ ...prev, bordaPiscante: !prev.bordaPiscante }))}
                     checked={configExpedicao.bordaPiscante}
-                    onChange={handleConfigChange}
+                    onColor="#86d3ff"
+                    onHandleColor="#2693e6"
+                    handleDiameter={22}
+                    uncheckedIcon={false}
+                    checkedIcon={false}
+                    boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                    activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                    height={16}
+                    width={38}
                   />
                   <span>Borda piscante após</span>
                 </label>
