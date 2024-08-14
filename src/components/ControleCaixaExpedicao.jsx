@@ -5,6 +5,10 @@ import {
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
+import { CiFries } from "react-icons/ci";
+import { FaHamburger } from "react-icons/fa";
+import { GiHamburger } from "react-icons/gi";
+import { PiHamburgerFill } from "react-icons/pi"; // Novo ícone para Marys
 
 const opcionais = [
   { id: 1, nome: 'Sem alface' },
@@ -368,7 +372,12 @@ const ControleCaixaExpedicao = () => {
             onClick={() => adicionarAoCarrinho(produto, [])}
           >
             <h3 className="text-sm font-semibold flex items-center">
-              {produto.icone} {produto.nome}
+              {/* Aqui estão os ícones de acordo com o produto */}
+              {produto.nome === 'KFT' && <GiHamburger className="mr-2" />}
+              {produto.nome === 'Falafel' && <FaHamburger className="mr-2" />}
+              {produto.nome === 'Marys' && <PiHamburgerFill className="mr-2" style={{ fontSize: '1.05rem' }} />} {/* Novo ícone para Marys */}
+              {produto.nome === 'Fritas' && <CiFries className="mr-2" style={{ fontSize: '1.25rem' }} />}
+              {produto.nome}
             </h3>
             <p className="text-gray-600 text-xs">R$ {produto.preco.toFixed(2)}</p>
             <button
