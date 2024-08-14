@@ -117,9 +117,11 @@ const ControleCaixaExpedicao = () => {
   };
 
   const apagarPedido = () => {
-    setCarrinho({});
-    setPedidoPrioritario(false);
-    setNomeCliente('');
+    if (window.confirm('Tem certeza de que deseja limpar todos os dados?')) {
+      setCarrinho({});
+      setPedidoPrioritario(false);
+      setNomeCliente('');
+    }
   };
 
   const enviarParaProducao = () => {
@@ -217,6 +219,8 @@ const ControleCaixaExpedicao = () => {
 
   const gerarDadosCSV = (filaPedidos) => {
     return filaPedidos.map(pedido => {
+      const [horario, ampm] = pedido.horario.split(' ');
+
       const produtoQuantidade = produtos.map(produto => {
         const itemPedido = Object.values(pedido.itens).find(item => item.nome === produto.nome);
         return itemPedido ? itemPedido.qtd : 0;
@@ -225,7 +229,8 @@ const ControleCaixaExpedicao = () => {
       return {
         numero_pedido: pedido.id,
         nome_cliente: pedido.cliente,
-        horario_pedido: pedido.horario,
+        horario_pedido: horario,
+        periodo: ampm,
         ...produtoQuantidade.reduce((acc, qtd, index) => {
           acc[produtos[index].nome] = qtd;
           return acc;
@@ -263,12 +268,14 @@ const ControleCaixaExpedicao = () => {
   const faturamentoTotal = calcularFaturamentoTotal();
 
   const limparDadosPersistidos = () => {
-    localStorage.removeItem('filaPedidos');
-    localStorage.removeItem('historicoVendas');
-    localStorage.removeItem('numeroPedido');
-    setFilaPedidos([]);
-    setHistoricoVendas({});
-    setNumeroPedido(1);
+    if (window.confirm('Tem certeza de que deseja limpar todos os dados?')) {
+      localStorage.removeItem('filaPedidos');
+      localStorage.removeItem('historicoVendas');
+      localStorage.removeItem('numeroPedido');
+      setFilaPedidos([]);
+      setHistoricoVendas({});
+      setNumeroPedido(1);
+    }
   };
 
   return (
@@ -290,7 +297,7 @@ const ControleCaixaExpedicao = () => {
         <div className="flex flex-wrap justify-between items-center">
           {produtos.map(produto => (
             <div key={produto.id} className="flex items-center mr-4 mb-2">
-              <span className="font-medium mr-2">{produto.nome}:</span>
+              <span className="font-medium mr-2">{produto.icone} {produto.nome}:</span>
               <span className="bg-white px-2 py-1 rounded">{historicoVendas[produto.id] || 0}</span>
             </div>
           ))}
@@ -308,7 +315,9 @@ const ControleCaixaExpedicao = () => {
             className={`${produto.cor} p-2 rounded-lg shadow hover:shadow-md transition-shadow text-left border border-gray-200 cursor-pointer`}
             onClick={() => adicionarAoCarrinho(produto, [])}
           >
-            <h3 className="text-sm font-semibold">{produto.nome}</h3>
+            <h3 className="text-sm font-semibold flex items-center">
+              {produto.icone} {produto.nome}
+            </h3>
             <p className="text-gray-600 text-xs">R$ {produto.preco.toFixed(2)}</p>
             <button
               onClick={(e) => {
