@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ShoppingCart, Edit3, Trash2, Send, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
-  Pause, Play, Check, Zap, AlertTriangle, Download, Settings
+  ShoppingCart, Edit3, Trash2, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
+  Pause, Check, Zap, AlertTriangle, Download, Settings
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
@@ -59,7 +59,7 @@ const ControleCaixaExpedicao = () => {
   const [opcionaisSelecionados, setOpcionaisSelecionados] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
-  const [editando, setEditando] = useState(false);
+  const [editandoItem, setEditandoItem] = useState(null);
   const [filaPedidos, setFilaPedidos] = useState(() => {
     const savedFilaPedidos = localStorage.getItem('filaPedidos');
     return savedFilaPedidos ? JSON.parse(savedFilaPedidos) : [];
@@ -109,12 +109,7 @@ const ControleCaixaExpedicao = () => {
   };
 
   const adicionarAoCarrinho = (produto, opcionais) => {
-    if (!produto) {
-      console.error('Produto não encontrado ou inválido.');
-      return;
-    }
-
-    const chaveProduto = `${produto.id}-${opcionais.join('-')}`;
+    const chaveProduto = editandoItem || `${produto.id}-${opcionais.join('-')}`;
 
     setCarrinho(prev => {
       const itemExistente = prev[chaveProduto];
@@ -123,8 +118,8 @@ const ControleCaixaExpedicao = () => {
         ...prev,
         [chaveProduto]: {
           ...produto,
-          qtd: (itemExistente?.qtd || 0) + 1,
-          opcionais: [...(itemExistente?.opcionais || []), ...opcionais],
+          qtd: itemExistente?.qtd || 1, // Mantém a quantidade atual
+          opcionais: editandoItem ? opcionaisSelecionados : [...(itemExistente?.opcionais || []), ...opcionais],
         },
       };
 
@@ -132,6 +127,7 @@ const ControleCaixaExpedicao = () => {
     });
 
     setMostrarModal(false);
+    setEditandoItem(null);
   };
 
   const abrirModal = (produto) => {
@@ -152,6 +148,14 @@ const ControleCaixaExpedicao = () => {
       }
       return { ...prev, [chave]: { ...itemExistente, qtd: novaQuantidade } };
     });
+  };
+
+  const editarOpcionais = (chave) => {
+    setEditandoItem(chave);
+    const item = carrinho[chave];
+    setProdutoSelecionado(item);
+    setOpcionaisSelecionados(item.opcionais);
+    setMostrarModal(true);
   };
 
   const apagarPedido = () => {
@@ -407,6 +411,7 @@ const ControleCaixaExpedicao = () => {
                     <input
                       type="checkbox"
                       value={opcional.nome}
+                      checked={opcionaisSelecionados.includes(opcional.nome)}
                       onChange={() => setOpcionaisSelecionados(prev =>
                         prev.includes(opcional.nome)
                           ? prev.filter(item => item !== opcional.nome)
@@ -437,9 +442,11 @@ const ControleCaixaExpedicao = () => {
 
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-lg font-semibold flex items-center">
-            <ShoppingCart className="mr-2" size={20} />
-            Carrinho
+          <div className="flex items-center">
+            <h2 className="text-lg font-semibold flex items-center mr-4">
+              <ShoppingCart className="mr-2" size={20} />
+              Carrinho
+            </h2>
             <input
               type="text"
               value={nomeCliente}
@@ -448,20 +455,19 @@ const ControleCaixaExpedicao = () => {
               placeholder="Nome do cliente"
               style={{ height: '28px' }}
             />
-          </h2>
-
-          <div className="flex space-x-2">
             <button
               onClick={togglePrioridade}
-              className={`p-1 rounded hover:bg-gray-200 ${pedidoPrioritario ? 'text-red-500' : ''}`}
+              className={`ml-2 p-1 rounded ${pedidoPrioritario ? 'text-red-500' : ''}`}
               title={pedidoPrioritario ? "Remover prioridade" : "Marcar como prioritário"}
             >
               <AlertTriangle size={20} />
             </button>
+          </div>
+          <div className="flex space-x-2">
             <button
-              onClick={() => setEditando(!editando)}
+              onClick={() => setEditandoItem(null)}
               className="p-1 rounded hover:bg-gray-200"
-              title={editando ? "Concluir Edição" : "Editar Pedido"}
+              title={editandoItem ? "Concluir Edição" : "Editar Pedido"}
             >
               <Edit3 size={20} />
             </button>
@@ -472,57 +478,64 @@ const ControleCaixaExpedicao = () => {
             >
               <Trash2 size={20} />
             </button>
-            <button
-              onClick={enviarParaProducao}
-              className="p-1 rounded hover:bg-gray-200"
-              disabled={totalItens === 0}
-              title="Enviar para Produção"
-            >
-              <Send size={20} />
-            </button>
           </div>
         </div>
 
         <ul>
-          {Object.entries(carrinho).map(([chave, { nome, preco, qtd, opcionais }]) => {
-            return (
-              <li key={chave} className="flex justify-between items-center mb-2">
-                <div className="flex-1 text-left">
-                  <span>{nome}</span>
-                </div>
-                <div className="flex-1 text-center">
-                  {editando && (
-                    <button
-                      onClick={() => editarQuantidade(chave, -1)}
-                      className="p-1 rounded hover:bg-gray-200"
-                    >
-                      <Minus size={16} />
-                    </button>
-                  )}
-                  <span className="mx-2">x {qtd}</span>
-                  {editando && (
-                    <button
-                      onClick={() => editarQuantidade(chave, 1)}
-                      className="p-1 rounded hover:bg-gray-200"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  )}
-                </div>
-                <div className="flex-1 text-right">
-                  {opcionais && opcionais.length > 0 && (
-                    <span className="text-xs text-gray-600">
-                      Opcionais: {opcionais.join(', ')}
-                    </span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
+          {Object.entries(carrinho).map(([chave, { nome, preco, qtd, opcionais }]) => (
+            <li key={chave} className="flex justify-between items-center mb-2">
+              <div className="flex-1">
+                <span>{nome}</span>
+              </div>
+              <div className="flex-1 text-center flex items-center justify-center">
+                <button
+                  onClick={() => editarQuantidade(chave, -1)}
+                  className="p-1 rounded hover:bg-gray-200"
+                >
+                  <Minus size={16} />
+                </button>
+                <span className="mx-2">x {qtd}</span>
+                <button
+                  onClick={() => editarQuantidade(chave, 1)}
+                  className="p-1 rounded hover:bg-gray-200"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+              <div className="flex-1 text-right">
+                {opcionais.length > 0 && (
+                  <span className="text-xs text-gray-600">
+                    Opcionais: {opcionais.join(', ')}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => editarOpcionais(chave)}
+                  className="p-1 rounded hover:bg-gray-200"
+                >
+                  <Edit3 size={16} />
+                </button>
+                <button
+                  onClick={() => removerItem(chave)}
+                  className="p-1 rounded hover:bg-gray-200"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </li>
+          ))}
         </ul>
         <div className="mt-4 text-right">
-          <p className="font-medium">Total de itens: {totalItens}</p>
-          <p className="text-lg font-bold">Total: R$ {totalValor.toFixed(2)}</p>
+          <p className="font-medium">Total de itens: {Object.keys(carrinho).length}</p>
+          <p className="text-lg font-bold">Total: R$ {calcularTotal(carrinho).toFixed(2)}</p>
+          <button
+            onClick={enviarParaProducao}
+            className="mt-4 p-2 bg-blue-500 text-white rounded"
+            disabled={Object.keys(carrinho).length === 0}
+          >
+            Enviar
+          </button>
         </div>
       </div>
 
