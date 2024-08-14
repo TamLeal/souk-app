@@ -370,8 +370,8 @@ const ControleCaixaExpedicao = () => {
 
       <h1 className="text-3xl font-bold mb-6 text-center">Expedição</h1>
 
-      <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-semibold mb-3">Produtos em Fila</h2>
+      <div className="bg-gray-300 p-4 rounded-lg shadow mb-6">
+        <h2 className="text-lg font-semibold mb-3">Painel de Producao</h2>
         <div className="flex flex-wrap justify-between items-center">
           {produtos.map(produto => (
             <div key={produto.id} className="flex items-center mr-4 mb-2">
@@ -451,7 +451,7 @@ const ControleCaixaExpedicao = () => {
         <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
           <h2 className="text-lg font-semibold mb-2 flex items-center">
             <Pause className="mr-2" size={20} />
-            Pedidos em Espera (On Hold)
+            Pedidos em Espera
           </h2>
           {pedidosOnHold.length === 0 ? (
             <p>Nenhum pedido em espera.</p>
