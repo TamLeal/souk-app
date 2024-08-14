@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   ShoppingCart, Edit3, Trash2, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
-  Pause, Check, Zap, AlertTriangle, Download, Settings
+  Pause, Check, Zap, AlertTriangle, Download, Settings, Send
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
@@ -543,7 +543,7 @@ const ControleCaixaExpedicao = () => {
             className="mt-4 p-2 bg-blue-500 text-white rounded"
             disabled={Object.keys(carrinho).length === 0}
           >
-            Enviar
+            Enviar Pedido
           </button>
         </div>
       </div>
