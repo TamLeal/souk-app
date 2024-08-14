@@ -109,26 +109,35 @@ const ControleCaixaExpedicao = () => {
   };
 
   const adicionarAoCarrinho = (produto, opcionais) => {
-    const chaveProduto = editandoItem || `${produto.id}-${opcionais.join('-')}`;
+    const chaveProduto = `${produto.id}-${opcionais.join('-')}`;
 
     setCarrinho(prev => {
-      const itemExistente = prev[chaveProduto];
-
-      const atualizado = {
-        ...prev,
-        [chaveProduto]: {
-          ...produto,
-          qtd: itemExistente?.qtd || 1, // Mantém a quantidade atual
-          opcionais: editandoItem ? opcionaisSelecionados : [...(itemExistente?.opcionais || []), ...opcionais],
-        },
-      };
-
-      return atualizado;
+        if (editandoItem) {
+            // Atualizar o item existente com novos opcionais
+            return {
+                ...prev,
+                [editandoItem]: {
+                    ...prev[editandoItem],
+                    opcionais: [...opcionais]
+                },
+            };
+        } else {
+            // Se não estiver editando, adiciona um novo item ao carrinho
+            return {
+                ...prev,
+                [chaveProduto]: {
+                    ...produto,
+                    qtd: (prev[chaveProduto]?.qtd || 0) + 1,
+                    opcionais: [...opcionais],
+                },
+            };
+        }
     });
 
     setMostrarModal(false);
     setEditandoItem(null);
-  };
+};
+
 
   const abrirModal = (produto) => {
     setProdutoSelecionado(produto);
@@ -156,6 +165,13 @@ const ControleCaixaExpedicao = () => {
     setProdutoSelecionado(item);
     setOpcionaisSelecionados(item.opcionais);
     setMostrarModal(true);
+  };
+
+  const removerItem = (chave) => {
+    setCarrinho(prev => {
+      const { [chave]: _, ...rest } = prev;
+      return rest;
+    });
   };
 
   const apagarPedido = () => {
@@ -464,13 +480,6 @@ const ControleCaixaExpedicao = () => {
             </button>
           </div>
           <div className="flex space-x-2">
-            <button
-              onClick={() => setEditandoItem(null)}
-              className="p-1 rounded hover:bg-gray-200"
-              title={editandoItem ? "Concluir Edição" : "Editar Pedido"}
-            >
-              <Edit3 size={20} />
-            </button>
             <button
               onClick={apagarPedido}
               className="p-1 rounded hover:bg-gray-200"
