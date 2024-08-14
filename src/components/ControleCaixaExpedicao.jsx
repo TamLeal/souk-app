@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   ShoppingCart, Edit3, Trash2, Send, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
-  Pause, Play, Check, Zap, AlertTriangle, Download
+  Pause, Play, Check, Zap, AlertTriangle, Download, Settings
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
@@ -19,6 +19,36 @@ const produtos = [
   { id: 3, nome: 'Marys', preco: 18, cor: 'bg-green-200' },
   { id: 4, nome: 'Fritas', preco: 8, cor: 'bg-yellow-100' },
 ];
+
+const ResumoEvento = ({ historicoVendas, faturamentoTotal, exportarCSV, limparDadosPersistidos }) => {
+  return (
+    <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="text-lg font-semibold">Resumo do Evento</h2>
+        <div className="flex space-x-2">
+          <button onClick={exportarCSV} className="p-1 rounded hover:bg-gray-200">
+            <Download size={20} />
+          </button>
+          <button onClick={limparDadosPersistidos} className="p-1 rounded hover:bg-gray-200">
+            Limpar Dados
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-wrap justify-between items-center">
+        {produtos.map(produto => (
+          <div key={produto.id} className="flex items-center mr-4 mb-2">
+            <span className="font-medium mr-2">{produto.nome}:</span>
+            <span className="bg-white px-2 py-1 rounded">{historicoVendas[produto.id] || 0}</span>
+          </div>
+        ))}
+        <div className="flex items-center">
+          <span className="font-medium mr-2">Faturamento:</span>
+          <span className="bg-white px-2 py-1 rounded font-bold">R$ {faturamentoTotal.toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ControleCaixaExpedicao = () => {
   const [carrinho, setCarrinho] = useState({});
@@ -43,6 +73,10 @@ const ControleCaixaExpedicao = () => {
   const [pedidoPrioritario, setPedidoPrioritario] = useState(false);
   const [nomeCliente, setNomeCliente] = useState('');
   const [contadorFila, setContadorFila] = useState({});
+  const [mostrarResumo, setMostrarResumo] = useState(false);
+  const [senha, setSenha] = useState('');
+  const [senhaCorreta, setSenhaCorreta] = useState(false);
+  const [mostrarInputSenha, setMostrarInputSenha] = useState(false);
 
   useEffect(() => {
     atualizarContadorFila();
@@ -278,35 +312,53 @@ const ControleCaixaExpedicao = () => {
     }
   };
 
+  const handleSenhaSubmit = (e) => {
+    e.preventDefault();
+    if (senha === 'lec123') {
+      setSenhaCorreta(true);
+      setMostrarResumo(true);
+    } else {
+      alert('Senha incorreta!');
+    }
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center">Controle de Caixa</h1>
 
-      <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-lg font-semibold">Resumo do Evento</h2>
-          <div className="flex space-x-2">
-            <button onClick={exportarCSV} className="p-1 rounded hover:bg-gray-200">
-              <Download size={20} />
+      <div className="flex justify-end mb-6 relative">
+        <button
+          onClick={() => setMostrarInputSenha(!mostrarInputSenha)}
+          className="p-1 rounded hover:bg-gray-200 relative z-10"
+        >
+          <Settings size={20} />
+        </button>
+
+        {/* Animação do Input e Botão */}
+        <div className={`absolute top-0 right-0 transition-all duration-300 transform ${mostrarInputSenha ? 'opacity-100 translate-x-[-70px]' : 'opacity-0 translate-x-full'}`}>
+          <form onSubmit={handleSenhaSubmit} className="flex items-center space-x-2">
+            <input
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="p-1 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              style={{ width: '150px' }}
+            />
+            <button type="submit" className="p-2 bg-blue-500 text-white rounded text-sm">
+              Confirmar
             </button>
-            <button onClick={limparDadosPersistidos} className="p-1 rounded hover:bg-gray-200">
-              Limpar Dados
-            </button>
-          </div>
-        </div>
-        <div className="flex flex-wrap justify-between items-center">
-          {produtos.map(produto => (
-            <div key={produto.id} className="flex items-center mr-4 mb-2">
-              <span className="font-medium mr-2">{produto.icone} {produto.nome}:</span>
-              <span className="bg-white px-2 py-1 rounded">{historicoVendas[produto.id] || 0}</span>
-            </div>
-          ))}
-          <div className="flex items-center">
-            <span className="font-medium mr-2">Faturamento:</span>
-            <span className="bg-white px-2 py-1 rounded font-bold">R$ {faturamentoTotal.toFixed(2)}</span>
-          </div>
+          </form>
         </div>
       </div>
+
+      {mostrarResumo && senhaCorreta && (
+        <ResumoEvento
+          historicoVendas={historicoVendas}
+          faturamentoTotal={faturamentoTotal}
+          exportarCSV={exportarCSV}
+          limparDadosPersistidos={limparDadosPersistidos}
+        />
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {produtos.map(produto => (
@@ -465,7 +517,7 @@ const ControleCaixaExpedicao = () => {
       <h1 className="text-3xl font-bold mb-6 text-center">Expedição</h1>
 
       <div className="bg-gray-300 p-4 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-semibold mb-3">Painel de Producao</h2>
+        <h2 className="text-lg font-semibold mb-3">Painel de Produção</h2>
         <div className="flex flex-wrap justify-between items-center">
           {produtos.map(produto => (
             <div key={produto.id} className="flex items-center mr-4 mb-2">
