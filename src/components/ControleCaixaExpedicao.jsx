@@ -26,11 +26,20 @@ const ControleCaixaExpedicao = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [editando, setEditando] = useState(false);
-  const [filaPedidos, setFilaPedidos] = useState([]);
+  const [filaPedidos, setFilaPedidos] = useState(() => {
+    const savedFilaPedidos = localStorage.getItem('filaPedidos');
+    return savedFilaPedidos ? JSON.parse(savedFilaPedidos) : [];
+  });
   const [pedidosOnHold, setPedidosOnHold] = useState([]);
   const [esquecidos, setEsquecidos] = useState([]);
-  const [historicoVendas, setHistoricoVendas] = useState({});
-  const [numeroPedido, setNumeroPedido] = useState(1);
+  const [historicoVendas, setHistoricoVendas] = useState(() => {
+    const savedHistoricoVendas = localStorage.getItem('historicoVendas');
+    return savedHistoricoVendas ? JSON.parse(savedHistoricoVendas) : {};
+  });
+  const [numeroPedido, setNumeroPedido] = useState(() => {
+    const savedNumeroPedido = localStorage.getItem('numeroPedido');
+    return savedNumeroPedido ? parseInt(savedNumeroPedido, 10) : 1;
+  });
   const [pedidoPrioritario, setPedidoPrioritario] = useState(false);
   const [nomeCliente, setNomeCliente] = useState('');
   const [contadorFila, setContadorFila] = useState({});
@@ -38,6 +47,18 @@ const ControleCaixaExpedicao = () => {
   useEffect(() => {
     atualizarContadorFila();
   }, [filaPedidos]);
+
+  useEffect(() => {
+    localStorage.setItem('filaPedidos', JSON.stringify(filaPedidos));
+  }, [filaPedidos]);
+
+  useEffect(() => {
+    localStorage.setItem('historicoVendas', JSON.stringify(historicoVendas));
+  }, [historicoVendas]);
+
+  useEffect(() => {
+    localStorage.setItem('numeroPedido', numeroPedido);
+  }, [numeroPedido]);
 
   const atualizarContadorFila = () => {
     const novoContador = {};
@@ -241,6 +262,15 @@ const ControleCaixaExpedicao = () => {
   const totalValor = calcularTotal(carrinho);
   const faturamentoTotal = calcularFaturamentoTotal();
 
+  const limparDadosPersistidos = () => {
+    localStorage.removeItem('filaPedidos');
+    localStorage.removeItem('historicoVendas');
+    localStorage.removeItem('numeroPedido');
+    setFilaPedidos([]);
+    setHistoricoVendas({});
+    setNumeroPedido(1);
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center">Controle de Caixa</h1>
@@ -248,9 +278,14 @@ const ControleCaixaExpedicao = () => {
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-lg font-semibold">Resumo do Evento</h2>
-          <button onClick={exportarCSV} className="p-1 rounded hover:bg-gray-200">
-            <Download size={20} />
-          </button>
+          <div className="flex space-x-2">
+            <button onClick={exportarCSV} className="p-1 rounded hover:bg-gray-200">
+              <Download size={20} />
+            </button>
+            <button onClick={limparDadosPersistidos} className="p-1 rounded hover:bg-gray-200">
+              Limpar Dados
+            </button>
+          </div>
         </div>
         <div className="flex flex-wrap justify-between items-center">
           {produtos.map(produto => (
