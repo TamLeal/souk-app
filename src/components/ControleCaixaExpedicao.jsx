@@ -255,51 +255,55 @@ const ControleCaixaExpedicao = () => {
     setPedidoPrioritario(!pedidoPrioritario);
   };
 
-  const gerarDadosCSV = (filaPedidos) => {
-    return filaPedidos.map(pedido => {
-      const [horario, ampm] = pedido.horario.split(' ');
+// Função para gerar os dados dos pedidos individuais em CSV
+const gerarDadosCSV = (filaPedidos) => {
+  return filaPedidos.map(pedido => {
+    const [horario, ampm] = pedido.horario.split(' ');
 
-      const produtoQuantidade = produtos.map(produto => {
-        const itemPedido = Object.values(pedido.itens).find(item => item.nome === produto.nome);
-        return itemPedido ? itemPedido.qtd : 0;
-      });
-
-      return {
-        numero_pedido: pedido.id,
-        nome_cliente: pedido.cliente,
-        horario_pedido: horario,
-        periodo: ampm,
-        ...produtoQuantidade.reduce((acc, qtd, index) => {
-          acc[produtos[index].nome] = qtd;
-          return acc;
-        }, {})
-      };
+    const produtoQuantidade = produtos.map(produto => {
+      const itemPedido = Object.values(pedido.itens).find(item => item.nome === produto.nome);
+      return itemPedido ? itemPedido.qtd : 0;
     });
-  };
 
-  const gerarConsolidadoCSV = (historicoVendas) => {
-    return Object.entries(historicoVendas).map(([id, qtd]) => {
-      const produto = produtos.find(p => p.id === parseInt(id));
-      return {
-        produto: produto.nome,
-        quantidade: qtd,
-        total_faturado: `R$ ${(produto.preco * qtd).toFixed(2)}`
-      };
-    });
-  };
+    return {
+      numero_pedido: pedido.id,
+      nome_cliente: pedido.cliente,
+      horario_pedido: horario,
+      periodo: ampm,
+      ...produtoQuantidade.reduce((acc, qtd, index) => {
+        acc[produtos[index].nome] = qtd;
+        return acc;
+      }, {})
+    };
+  });
+};
 
-  const exportarCSV = () => {
-    const dadosPedidos = gerarDadosCSV(filaPedidos);
-    const consolidadoProdutos = gerarConsolidadoCSV(historicoVendas);
+// Função para gerar o relatório consolidado em CSV
+const gerarConsolidadoCSV = (historicoVendas) => {
+  return Object.entries(historicoVendas).map(([id, qtd]) => {
+    const produto = produtos.find(p => p.id === parseInt(id));
+    return {
+      produto: produto.nome,
+      quantidade: qtd,
+      total_faturado: `R$ ${(produto.preco * qtd).toFixed(2)}`
+    };
+  });
+};
 
-    const csvPedidos = Papa.unparse(dadosPedidos);
-    const csvConsolidado = Papa.unparse(consolidadoProdutos);
+// Função para exportar o CSV
+const exportarCSV = () => {
+  const dadosPedidos = gerarDadosCSV(filaPedidos);
+  const consolidadoProdutos = gerarConsolidadoCSV(historicoVendas);
 
-    const csvCompleto = `${csvPedidos}\n\n--- Consolidado ---\n\n${csvConsolidado}`;
+  const csvPedidos = Papa.unparse(dadosPedidos);
+  const csvConsolidado = Papa.unparse(consolidadoProdutos);
 
-    const blob = new Blob([csvCompleto], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, `exportacao_pedidos_consolidado_${new Date().toISOString()}.csv`);
-  };
+  const csvCompleto = `${csvPedidos}\n\n--- Consolidado ---\n\n${csvConsolidado}`;
+
+  const blob = new Blob([csvCompleto], { type: 'text/csv;charset=utf-8;' });
+  saveAs(blob, `exportacao_pedidos_consolidado_${new Date().toISOString()}.csv`);
+};
+
 
   const totalItens = Object.values(carrinho).reduce((acc, { qtd }) => acc + qtd, 0);
   const totalValor = calcularTotal(carrinho);
