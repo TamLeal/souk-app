@@ -352,7 +352,7 @@ const ControleCaixaExpedicao = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center">Controle de Caixa</h1>
-
+  
       <div className="flex justify-end mb-6 relative">
         <button
           onClick={() => setMostrarInputSenha(!mostrarInputSenha)}
@@ -360,8 +360,7 @@ const ControleCaixaExpedicao = () => {
         >
           <Settings size={20} />
         </button>
-
-        {/* Animação do Input e Botão */}
+  
         <div className={`absolute top-0 right-0 transition-all duration-300 transform ${mostrarInputSenha ? 'opacity-100 translate-x-[-70px]' : 'opacity-0 translate-x-full'}`}>
           <form onSubmit={handleSenhaSubmit} className="flex items-center space-x-2">
             <input
@@ -377,7 +376,7 @@ const ControleCaixaExpedicao = () => {
           </form>
         </div>
       </div>
-
+  
       {mostrarResumo && senhaCorreta && (
         <ResumoEvento
           historicoVendas={historicoVendas}
@@ -386,7 +385,7 @@ const ControleCaixaExpedicao = () => {
           limparDadosPersistidos={limparDadosPersistidos}
         />
       )}
-
+  
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {produtos.map(produto => (
           <div
@@ -395,17 +394,16 @@ const ControleCaixaExpedicao = () => {
             onClick={() => adicionarAoCarrinho(produto, [])}
           >
             <h3 className="text-sm font-semibold flex items-center">
-              {/* Aqui estão os ícones de acordo com o produto */}
               {produto.nome === 'KFT' && <GiHamburger className="mr-2" />}
               {produto.nome === 'Falafel' && <FaHamburger className="mr-2" />}
-              {produto.nome === 'Marys' && <PiHamburgerFill className="mr-2" style={{ fontSize: '1.05rem' }} />} {/* Novo ícone para Marys */}
+              {produto.nome === 'Marys' && <PiHamburgerFill className="mr-2" style={{ fontSize: '1.05rem' }} />}
               {produto.nome === 'Fritas' && <CiFries className="mr-2" style={{ fontSize: '1.25rem' }} />}
               {produto.nome}
             </h3>
             <p className="text-gray-600 text-xs">R$ {produto.preco.toFixed(2)}</p>
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Impede que o clique no botão envie o produto ao carrinho diretamente
+                e.stopPropagation();
                 abrirModal(produto);
               }}
               className="mt-2 p-1 bg-white text-black rounded"
@@ -415,7 +413,7 @@ const ControleCaixaExpedicao = () => {
           </div>
         ))}
       </div>
-
+  
       {mostrarModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -455,7 +453,7 @@ const ControleCaixaExpedicao = () => {
           </div>
         </div>
       )}
-
+  
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
@@ -489,7 +487,7 @@ const ControleCaixaExpedicao = () => {
             </button>
           </div>
         </div>
-
+  
         <ul>
           {Object.entries(carrinho).map(([chave, { nome, preco, qtd, opcionais }]) => (
             <li key={chave} className="flex justify-between items-center mb-2">
@@ -538,18 +536,21 @@ const ControleCaixaExpedicao = () => {
         <div className="mt-4 text-right">
           <p className="font-medium">Total de itens: {Object.keys(carrinho).length}</p>
           <p className="text-lg font-bold">Total: R$ {calcularTotal(carrinho).toFixed(2)}</p>
-          <button
-            onClick={enviarParaProducao}
-            className="mt-4 p-2 bg-blue-500 text-white rounded"
-            disabled={Object.keys(carrinho).length === 0}
-          >
-            Enviar Pedido
-          </button>
+          <div className="flex justify-end">
+            <button
+              onClick={enviarParaProducao}
+              className="mt-4 p-2 bg-blue-500 text-white rounded flex items-center justify-center"
+              disabled={Object.keys(carrinho).length === 0}
+            >
+              <span>Enviar Pedido</span>
+              <Send size={20} className="ml-2" />
+            </button>
+          </div>
         </div>
       </div>
-
+  
       <h1 className="text-3xl font-bold mb-6 text-center">Expedição</h1>
-
+  
       <div className="bg-gray-300 p-4 rounded-lg shadow mb-6">
         <h2 className="text-lg font-semibold mb-3">Painel de Produção</h2>
         <div className="flex flex-wrap justify-between items-center">
@@ -561,7 +562,7 @@ const ControleCaixaExpedicao = () => {
           ))}
         </div>
       </div>
-
+  
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6 overflow-x-auto">
         <h2 className="text-lg font-semibold mb-2 flex items-center">
           <ChefHat className="mr-2" size={20} />
@@ -626,7 +627,7 @@ const ControleCaixaExpedicao = () => {
           </div>
         )}
       </div>
-
+  
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
           <h2 className="text-lg font-semibold mb-2 flex items-center">
@@ -678,7 +679,7 @@ const ControleCaixaExpedicao = () => {
             </ul>
           )}
         </div>
-
+  
         <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
           <h2 className="text-lg font-semibold mb-2 flex items-center">
             <Zap className="mr-2" size={20} />
@@ -723,6 +724,7 @@ const ControleCaixaExpedicao = () => {
       </div>
     </div>
   );
+  
 };
 
 export default ControleCaixaExpedicao;
