@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   ShoppingCart, Edit3, Trash2, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
-  Pause, Check, Zap, AlertTriangle, Download, Settings, Send
+  Pause, Check, Zap, AlertTriangle, Download, Settings, Send, Clock
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
@@ -82,6 +82,15 @@ const ControleCaixaExpedicao = () => {
   const [senhaCorreta, setSenhaCorreta] = useState(false);
   const [mostrarInputSenha, setMostrarInputSenha] = useState(false);
 
+  // Configurações das features
+  const [configExpedicao, setConfigExpedicao] = useState({
+    subidaAutomatica: false,
+    tempoSubida: 15, // tempo em minutos
+    bordaPiscante: false,
+    tempoBordaPiscante: 20 // tempo em minutos
+  });
+  const [mostrarConfig, setMostrarConfig] = useState(false);
+
   useEffect(() => {
     atualizarContadorFila();
   }, [filaPedidos]);
@@ -98,6 +107,30 @@ const ControleCaixaExpedicao = () => {
     localStorage.setItem('numeroPedido', numeroPedido);
   }, [numeroPedido]);
 
+  useEffect(() => {
+    if (configExpedicao.subidaAutomatica) {
+      const intervalo = setInterval(() => {
+        verificarSubidaAutomatica();
+      }, 60000); // verifica a cada minuto
+      return () => clearInterval(intervalo);
+    }
+  }, [filaPedidos, configExpedicao]);
+
+  const verificarSubidaAutomatica = () => {
+    const agora = new Date().getTime();
+    const novosPedidos = [...filaPedidos];
+
+    novosPedidos.forEach((pedido, index) => {
+      const tempoNaFila = (agora - new Date(pedido.horario).getTime()) / 60000;
+      if (tempoNaFila > configExpedicao.tempoSubida) {
+        novosPedidos.splice(index, 1);
+        novosPedidos.unshift({ ...pedido, subidaAutomatica: true });
+      }
+    });
+
+    setFilaPedidos(novosPedidos);
+  };
+
   const atualizarContadorFila = () => {
     const novoContador = {};
     filaPedidos.forEach(pedido => {
@@ -113,7 +146,6 @@ const ControleCaixaExpedicao = () => {
 
     setCarrinho(prev => {
         if (editandoItem) {
-            // Atualizar o item existente com novos opcionais
             return {
                 ...prev,
                 [editandoItem]: {
@@ -122,7 +154,6 @@ const ControleCaixaExpedicao = () => {
                 },
             };
         } else {
-            // Se não estiver editando, adiciona um novo item ao carrinho
             return {
                 ...prev,
                 [chaveProduto]: {
@@ -194,7 +225,7 @@ const ControleCaixaExpedicao = () => {
       itens: carrinho,
       total: calcularTotal(carrinho),
       prioritario: pedidoPrioritario,
-      horario: new Date().toLocaleTimeString(),
+      horario: new Date().toISOString(),
     };
 
     setFilaPedidos(prev => [...prev, novoPedido]);
@@ -275,42 +306,6 @@ const ControleCaixaExpedicao = () => {
     setPedidoPrioritario(!pedidoPrioritario);
   };
 
-  // Função para gerar os dados dos pedidos individuais em CSV
-  const gerarDadosCSV = (filaPedidos) => {
-    return filaPedidos.map(pedido => {
-      const [horario, ampm] = pedido.horario.split(' ');
-
-      const produtoQuantidade = produtos.map(produto => {
-        const itemPedido = Object.values(pedido.itens).find(item => item.nome === produto.nome);
-        return itemPedido ? itemPedido.qtd : 0;
-      });
-
-      return {
-        numero_pedido: pedido.id,
-        nome_cliente: pedido.cliente,
-        horario_pedido: horario,
-        periodo: ampm,
-        ...produtoQuantidade.reduce((acc, qtd, index) => {
-          acc[produtos[index].nome] = qtd;
-          return acc;
-        }, {})
-      };
-    });
-  };
-
-  // Função para gerar o relatório consolidado em CSV
-  const gerarConsolidadoCSV = (historicoVendas) => {
-    return Object.entries(historicoVendas).map(([id, qtd]) => {
-      const produto = produtos.find(p => p.id === parseInt(id));
-      return {
-        produto: produto.nome,
-        quantidade: qtd,
-        total_faturado: `R$ ${(produto.preco * qtd).toFixed(2)}`
-      };
-    });
-  };
-
-  // Função para exportar o CSV
   const exportarCSV = () => {
     const dadosPedidos = gerarDadosCSV(filaPedidos);
     const consolidadoProdutos = gerarConsolidadoCSV(historicoVendas);
@@ -324,9 +319,37 @@ const ControleCaixaExpedicao = () => {
     saveAs(blob, `exportacao_pedidos_consolidado_${new Date().toISOString()}.csv`);
   };
 
-  const totalItens = Object.values(carrinho).reduce((acc, { qtd }) => acc + qtd, 0);
-  const totalValor = calcularTotal(carrinho);
-  const faturamentoTotal = calcularFaturamentoTotal();
+  const gerarDadosCSV = (filaPedidos) => {
+    return filaPedidos.map(pedido => {
+      const horario = new Date(pedido.horario).toLocaleTimeString();
+
+      const produtoQuantidade = produtos.map(produto => {
+        const itemPedido = Object.values(pedido.itens).find(item => item.nome === produto.nome);
+        return itemPedido ? itemPedido.qtd : 0;
+      });
+
+      return {
+        numero_pedido: pedido.id,
+        nome_cliente: pedido.cliente,
+        horario_pedido: horario,
+        ...produtoQuantidade.reduce((acc, qtd, index) => {
+          acc[produtos[index].nome] = qtd;
+          return acc;
+        }, {})
+      };
+    });
+  };
+
+  const gerarConsolidadoCSV = (historicoVendas) => {
+    return Object.entries(historicoVendas).map(([id, qtd]) => {
+      const produto = produtos.find(p => p.id === parseInt(id));
+      return {
+        produto: produto.nome,
+        quantidade: qtd,
+        total_faturado: `R$ ${(produto.preco * qtd).toFixed(2)}`
+      };
+    });
+  };
 
   const limparDadosPersistidos = () => {
     if (window.confirm('Tem certeza de que deseja limpar todos os dados?')) {
@@ -349,10 +372,18 @@ const ControleCaixaExpedicao = () => {
     }
   };
 
+  const handleConfigChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setConfigExpedicao(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : parseInt(value, 10)
+    }));
+  };
+
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="relative p-6 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center">Controle de Caixa</h1>
-  
+
       <div className="flex justify-end mb-6 relative">
         <button
           onClick={() => setMostrarInputSenha(!mostrarInputSenha)}
@@ -360,7 +391,7 @@ const ControleCaixaExpedicao = () => {
         >
           <Settings size={20} />
         </button>
-  
+
         <div className={`absolute top-0 right-0 transition-all duration-300 transform ${mostrarInputSenha ? 'opacity-100 translate-x-[-70px]' : 'opacity-0 translate-x-full'}`}>
           <form onSubmit={handleSenhaSubmit} className="flex items-center space-x-2">
             <input
@@ -376,7 +407,7 @@ const ControleCaixaExpedicao = () => {
           </form>
         </div>
       </div>
-  
+
       {mostrarResumo && senhaCorreta && (
         <ResumoEvento
           historicoVendas={historicoVendas}
@@ -385,7 +416,7 @@ const ControleCaixaExpedicao = () => {
           limparDadosPersistidos={limparDadosPersistidos}
         />
       )}
-  
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {produtos.map(produto => (
           <div
@@ -413,7 +444,7 @@ const ControleCaixaExpedicao = () => {
           </div>
         ))}
       </div>
-  
+
       {mostrarModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -453,7 +484,7 @@ const ControleCaixaExpedicao = () => {
           </div>
         </div>
       )}
-  
+
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
@@ -487,7 +518,7 @@ const ControleCaixaExpedicao = () => {
             </button>
           </div>
         </div>
-  
+
         <ul>
           {Object.entries(carrinho).map(([chave, { nome, preco, qtd, opcionais }]) => (
             <li key={chave} className="flex justify-between items-center mb-2">
@@ -548,11 +579,72 @@ const ControleCaixaExpedicao = () => {
           </div>
         </div>
       </div>
-  
+
       <h1 className="text-3xl font-bold mb-6 text-center">Expedição</h1>
-  
-      <div className="bg-gray-300 p-4 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-semibold mb-3">Painel de Produção</h2>
+
+      <div className="relative bg-gray-300 p-4 rounded-lg shadow mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold mb-3">Painel de Produção</h2>
+        </div>
+
+        <button
+          onClick={() => setMostrarConfig(!mostrarConfig)}
+          className="absolute top-0 right-0 mt-2 mr-2 p-1 rounded hover:bg-gray-200 z-20"
+        >
+          <Settings size={20} />
+        </button>
+
+        {mostrarConfig && (
+          <div className="absolute right-0 top-0 mt-10 mr-2 bg-white p-4 rounded-lg shadow-lg z-20">
+            <h3 className="text-md font-semibold mb-3">Configurações de Expedição</h3>
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center space-x-4">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="subidaAutomatica"
+                    checked={configExpedicao.subidaAutomatica}
+                    onChange={handleConfigChange}
+                  />
+                  <span>Subida automática após</span>
+                </label>
+                <input
+                  type="number"
+                  name="tempoSubida"
+                  value={configExpedicao.tempoSubida}
+                  onChange={handleConfigChange}
+                  className="p-1 border border-gray-300 rounded text-sm"
+                  style={{ width: '50px' }}
+                  disabled={!configExpedicao.subidaAutomatica}
+                />
+                <span>minutos</span>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="bordaPiscante"
+                    checked={configExpedicao.bordaPiscante}
+                    onChange={handleConfigChange}
+                  />
+                  <span>Borda piscante após</span>
+                </label>
+                <input
+                  type="number"
+                  name="tempoBordaPiscante"
+                  value={configExpedicao.tempoBordaPiscante}
+                  onChange={handleConfigChange}
+                  className="p-1 border border-gray-300 rounded text-sm"
+                  style={{ width: '50px' }}
+                  disabled={!configExpedicao.bordaPiscante}
+                />
+                <span>minutos</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap justify-between items-center">
           {produtos.map(produto => (
             <div key={produto.id} className="flex items-center mr-4 mb-2">
@@ -562,7 +654,7 @@ const ControleCaixaExpedicao = () => {
           ))}
         </div>
       </div>
-  
+
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-6 overflow-x-auto">
         <h2 className="text-lg font-semibold mb-2 flex items-center">
           <ChefHat className="mr-2" size={20} />
@@ -572,62 +664,70 @@ const ControleCaixaExpedicao = () => {
           <p>Nenhum pedido na fila.</p>
         ) : (
           <div className="flex space-x-4">
-            {filaPedidos.map((pedido, index) => (
-              <div key={pedido.id} className={`flex-shrink-0 w-80 p-4 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'}`}>
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
-                  <div className="text-xs text-gray-500">{pedido.horario}</div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => moverPedido(index, -1)}
-                      className="p-1 rounded hover:bg-gray-200"
-                      disabled={index === 0}
-                    >
-                      <ArrowUp size={16} />
-                    </button>
-                    <button
-                      onClick={() => moverPedido(index, 1)}
-                      className="p-1 rounded hover:bg-gray-200"
-                      disabled={index === filaPedidos.length - 1}
-                    >
-                      <ArrowDown size={16} />
-                    </button>
-                    <button
-                      onClick={() => togglePedidoOnHold(pedido)}
-                      className="p-1 rounded hover:bg-gray-200"
-                      title="Colocar em espera"
-                    >
-                      <Pause size={16} />
-                    </button>
-                    <button
-                      onClick={() => removerPedido(pedido.id)}
-                      className="p-1 rounded hover:bg-gray-200"
-                      title="Pedido entregue"
-                    >
-                      <Check size={16} />
-                    </button>
+            {filaPedidos.map((pedido, index) => {
+              const tempoNaFila = (new Date().getTime() - new Date(pedido.horario).getTime()) / 60000;
+              const isBordaPiscante = configExpedicao.bordaPiscante && tempoNaFila > configExpedicao.tempoBordaPiscante;
+              return (
+                <div
+                  key={pedido.id}
+                  className={`flex-shrink-0 w-80 p-4 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'} ${isBordaPiscante ? 'animate-pulse border-4 border-red-500' : ''}`}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
+                    <div className="text-xs text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => moverPedido(index, -1)}
+                        className="p-1 rounded hover:bg-gray-200"
+                        disabled={index === 0}
+                      >
+                        <ArrowUp size={16} />
+                      </button>
+                      <button
+                        onClick={() => moverPedido(index, 1)}
+                        className="p-1 rounded hover:bg-gray-200"
+                        disabled={index === filaPedidos.length - 1}
+                      >
+                        <ArrowDown size={16} />
+                      </button>
+                      <button
+                        onClick={() => togglePedidoOnHold(pedido)}
+                        className="p-1 rounded hover:bg-gray-200"
+                        title="Colocar em espera"
+                      >
+                        <Pause size={16} />
+                      </button>
+                      <button
+                        onClick={() => removerPedido(pedido.id)}
+                        className="p-1 rounded hover:bg-gray-200"
+                        title="Pedido entregue"
+                      >
+                        <Check size={16} />
+                      </button>
+                      {pedido.subidaAutomatica && <Clock className="text-red-500" size={16} />}
+                    </div>
                   </div>
-                </div>
-                <ul>
-                  {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
-                    <li key={id} className="flex justify-between items-center mb-2">
-                      <div className="flex-1">
-                        <span>{nome} x {qtd}</span>
-                      </div>
-                      {opcionais && opcionais.length > 0 && (
-                        <div className="flex-1 text-right text-xs text-gray-600">
-                          Opcionais: {opcionais.join(', ')}
+                  <ul>
+                    {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
+                      <li key={id} className="flex justify-between items-center mb-2">
+                        <div className="flex-1">
+                          <span>{nome} x {qtd}</span>
                         </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+                        {opcionais && opcionais.length > 0 && (
+                          <div className="flex-1 text-right text-xs text-gray-600">
+                            Opcionais: {opcionais.join(', ')}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
-  
+
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
           <h2 className="text-lg font-semibold mb-2 flex items-center">
@@ -642,7 +742,7 @@ const ControleCaixaExpedicao = () => {
                 <li key={pedido.id} className="mb-4 p-3 bg-blue-100 rounded-lg shadow">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
-                    <div className="text-xs text-gray-500">{pedido.horario}</div>
+                    <div className="text-xs text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
                     <div className="flex space-x-2">
                       <button
                         onClick={() => moverParaEsquecidos(pedido)}
@@ -679,7 +779,7 @@ const ControleCaixaExpedicao = () => {
             </ul>
           )}
         </div>
-  
+
         <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
           <h2 className="text-lg font-semibold mb-2 flex items-center">
             <Zap className="mr-2" size={20} />
@@ -693,7 +793,7 @@ const ControleCaixaExpedicao = () => {
                 <li key={pedido.id} className="mb-4 p-3 bg-yellow-100 rounded-lg shadow">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
-                    <div className="text-xs text-gray-500">{pedido.horario}</div>
+                    <div className="text-xs text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
                     <button
                       onClick={() => removerPedido(pedido.id)}
                       className="p-1 rounded hover:bg-gray-200"
@@ -724,7 +824,6 @@ const ControleCaixaExpedicao = () => {
       </div>
     </div>
   );
-  
 };
 
 export default ControleCaixaExpedicao;
