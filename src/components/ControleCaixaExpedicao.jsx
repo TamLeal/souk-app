@@ -128,6 +128,7 @@ const ControleCaixaExpedicao = () => {
     tempoBordaPiscante: 20
   });
   const [mostrarConfig, setMostrarConfig] = useState(false);
+  const [mostrarHistorico, setMostrarHistorico] = useState(false); // Novo estado para controlar a visibilidade do histórico
 
   useEffect(() => {
     atualizarContadorFila();
@@ -941,14 +942,18 @@ const ControleCaixaExpedicao = () => {
         </div>
       </div>
 
-      <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
+      {/* Histórico de Ações com scroll interno condicional */}
+      <div
+        className={`bg-gray-100 p-4 rounded-lg shadow mt-6 cursor-pointer transition-all duration-300 ease-in-out ${
+          mostrarHistorico ? 'max-h-64 overflow-y-auto' : 'max-h-10 overflow-hidden'
+        }`}
+        onClick={() => setMostrarHistorico(!mostrarHistorico)}
+      >
         <h2 className="text-lg font-semibold mb-2 flex items-center">
           <Zap className="mr-2" size={20} />
           Histórico de Ações
         </h2>
-        {historicoAcoes.length === 0 ? (
-          <p>Nenhuma ação registrada.</p>
-        ) : (
+        {mostrarHistorico && historicoAcoes.length > 0 ? (
           <ul>
             {historicoAcoes.map((acao, index) => (
               <li key={index} className="mb-2 p-2 bg-white rounded-lg shadow">
@@ -956,6 +961,8 @@ const ControleCaixaExpedicao = () => {
               </li>
             ))}
           </ul>
+        ) : (
+          <p>Nenhuma ação registrada.</p>
         )}
       </div>
     </div>
