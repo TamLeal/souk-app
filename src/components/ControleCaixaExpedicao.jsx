@@ -944,27 +944,31 @@ const ControleCaixaExpedicao = () => {
 
       {/* Histórico de Ações com scroll interno condicional */}
       <div
-        className={`bg-gray-100 p-4 rounded-lg shadow mt-6 cursor-pointer transition-all duration-300 ease-in-out ${
-          mostrarHistorico ? 'max-h-64 overflow-y-auto' : 'max-h-10 overflow-hidden'
+        className={`bg-gray-100 px-4 rounded-lg shadow mt-6 cursor-pointer transition-all duration-300 ease-in-out w-1/2 ${
+          mostrarHistorico ? 'max-h-64 overflow-y-auto py-4' : 'max-h-10 py-2 flex items-center'
         }`}
         onClick={() => setMostrarHistorico(!mostrarHistorico)}
       >
-        <h2 className="text-lg font-semibold mb-2 flex items-center">
+        <h2 className="text-lg font-semibold flex items-center">
           <Zap className="mr-2" size={20} />
           Histórico de Ações
         </h2>
         {mostrarHistorico && historicoAcoes.length > 0 ? (
           <ul>
             {historicoAcoes.map((acao, index) => (
-              <li key={index} className="mb-2 p-2 bg-white rounded-lg shadow">
+              <li
+                key={index}
+                className={`mb-2 p-2 bg-white rounded-lg shadow text-sm ${index === 0 ? 'mt-2' : ''}`}
+              >
                 {acao}
               </li>
             ))}
           </ul>
         ) : (
-          <p>Nenhuma ação registrada.</p>
+          mostrarHistorico && <p className="text-sm">Nenhuma ação registrada.</p>
         )}
       </div>
+
     </div>
   );
 };
