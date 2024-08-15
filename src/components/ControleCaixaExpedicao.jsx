@@ -651,10 +651,18 @@ const ControleCaixaExpedicao = () => {
 
       <h1 className="text-3xl font-bold mb-6 text-center">Expedição</h1>
 
-      <div className="relative bg-gray-300 p-4 rounded-lg shadow mb-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold mb-3">Painel de Produção</h2>
+      <div className="relative bg-gray-300 p-6 rounded-lg shadow mb-6">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex items-center space-x-2">
+            <h2 className="text-lg font-semibold">Painel de Produção</h2>
+            <button
+              onClick={() => setMostrarConfig(!mostrarConfig)}
+              className="p-1 rounded hover:bg-gray-200"
+            >
+              <Settings size={20} />
+            </button>
+          </div>
+          <div className="flex items-center space-x-4">
             <input
               type="text"
               value={searchTerm}
@@ -673,16 +681,8 @@ const ControleCaixaExpedicao = () => {
             </select>
           </div>
         </div>
-
-        <button
-          onClick={() => setMostrarConfig(!mostrarConfig)}
-          className="absolute top-0 right-0 mt-2 mr-2 p-1 rounded hover:bg-gray-200 z-20"
-        >
-          <Settings size={20} />
-        </button>
-
         {mostrarConfig && (
-          <div className="absolute right-0 top-0 mt-10 mr-2 bg-white p-4 rounded-lg shadow-lg z-20">
+          <div className="absolute left-0 top-0 mt-16 ml-0 bg-white p-4 rounded-lg shadow-lg z-20">
             <h3 className="text-md font-semibold mb-3">Configurações de Expedição</h3>
             <div className="flex flex-col space-y-4">
               <div className="flex items-center space-x-4">
@@ -745,16 +745,16 @@ const ControleCaixaExpedicao = () => {
             </div>
           </div>
         )}
-
         <div className="flex flex-wrap justify-between items-center">
           {produtos.map(produto => (
-            <div key={produto.id} className="flex items-center mr-4 mb-2">
+            <div key={produto.id} className="flex items-center mr-6 mb-4">
               <span className="font-medium mr-2">{produto.nome}:</span>
               <span className="bg-white px-2 py-1 rounded">{contadorFila[produto.nome] || 0}</span>
             </div>
           ))}
         </div>
       </div>
+
 
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="filaPedidos" direction="horizontal">
