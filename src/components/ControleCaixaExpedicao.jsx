@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ShoppingCart, Edit3, Trash2, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
-  Pause, Check, Zap, AlertTriangle, Download, Settings, Send, Clock, Filter, Search
+  Pause, Check, Download, Settings, Send, Clock, ClipboardList, AlertTriangle, Zap
 } from 'lucide-react';
 import Switch from "react-switch";
 import { saveAs } from 'file-saver';
@@ -292,7 +292,11 @@ const ControleCaixaExpedicao = () => {
       return novoHistorico;
     });
 
-    setHistoricoAcoes(prev => [...prev, `Pedido #${numeroPedido} enviado para produção`]);
+    const horarioAcao = new Date().toLocaleTimeString();
+    setHistoricoAcoes(prev => [
+      ...prev,
+      `Pedido ${nomeCliente} #${numeroPedido} enviado para produção (${horarioAcao})`
+    ]);
 
     setCarrinho({});
     setPedidoPrioritario(false);
@@ -316,11 +320,16 @@ const ControleCaixaExpedicao = () => {
     const [movedPedido] = novosPedidos.splice(sourceIndex, 1);
     novosPedidos.splice(destinationIndex, 0, movedPedido);
 
+    const horarioAcao = new Date().toLocaleTimeString();
     setFilaPedidos(novosPedidos);
-    setHistoricoAcoes(prev => [...prev, `Pedido #${movedPedido.id} movido na fila`]);
+    setHistoricoAcoes(prev => [
+      ...prev,
+      `Pedido ${movedPedido.cliente} #${movedPedido.id} movido na fila (${horarioAcao})`
+    ]);
   };
 
   const togglePedidoOnHold = (pedido) => {
+    const horarioAcao = new Date().toLocaleTimeString();
     if (filaPedidos.includes(pedido)) {
       setFilaPedidos(prev => prev.filter(p => p.id !== pedido.id));
       setPedidosOnHold(prev => [...prev, pedido]);
@@ -328,25 +337,43 @@ const ControleCaixaExpedicao = () => {
       setPedidosOnHold(prev => prev.filter(p => p.id !== pedido.id));
       setFilaPedidos(prev => [...prev, pedido]);
     }
-    setHistoricoAcoes(prev => [...prev, `Pedido #${pedido.id} colocado em espera`]);
+    setHistoricoAcoes(prev => [
+      ...prev,
+      `Pedido ${pedido.cliente} #${pedido.id} colocado em espera (${horarioAcao})`
+    ]);
   };
 
   const moverParaEsquecidos = (pedido) => {
+    const horarioAcao = new Date().toLocaleTimeString();
     setPedidosOnHold(prev => prev.filter(p => p.id !== pedido.id));
     setEsquecidos(prev => [...prev, pedido]);
-    setHistoricoAcoes(prev => [...prev, `Pedido #${pedido.id} movido para esquecidos`]);
+    setHistoricoAcoes(prev => [
+      ...prev,
+      `Pedido ${pedido.cliente} #${pedido.id} movido para esquecidos (${horarioAcao})`
+    ]);
   };
 
   const removerPedido = (id) => {
+    const horarioAcao = new Date().toLocaleTimeString();
+    const pedidoRemovido = filaPedidos.find(pedido => pedido.id === id) || pedidosOnHold.find(pedido => pedido.id === id) || esquecidos.find(pedido => pedido.id === id);
+
     setFilaPedidos(prev => prev.filter(pedido => pedido.id !== id));
     setPedidosOnHold(prev => prev.filter(pedido => pedido.id !== id));
     setEsquecidos(prev => prev.filter(pedido => pedido.id !== id));
-    setHistoricoAcoes(prev => [...prev, `Pedido #${id} removido da fila`]);
+    
+    setHistoricoAcoes(prev => [
+      ...prev,
+      `Pedido ${pedidoRemovido.cliente} #${id} removido da fila (${horarioAcao})`
+    ]);
   };
 
   const togglePrioridade = () => {
+    const horarioAcao = new Date().toLocaleTimeString();
     setPedidoPrioritario(!pedidoPrioritario);
-    setHistoricoAcoes(prev => [...prev, `Pedido marcado como ${pedidoPrioritario ? 'normal' : 'prioritário'}`]);
+    setHistoricoAcoes(prev => [
+      ...prev,
+      `Pedido marcado como ${pedidoPrioritario ? 'normal' : 'prioritário'} (${horarioAcao})`
+    ]);
   };
 
   const exportarCSV = () => {
@@ -402,7 +429,7 @@ const ControleCaixaExpedicao = () => {
       setFilaPedidos([]);
       setHistoricoVendas({});
       setNumeroPedido(1);
-      setHistoricoAcoes(prev => [...prev, 'Todos os dados persistidos foram limpos']);
+      setHistoricoAcoes(prev => [...prev, `Todos os dados persistidos foram limpos (${new Date().toLocaleTimeString()})`]);
     }
   };
 
@@ -950,7 +977,7 @@ const ControleCaixaExpedicao = () => {
         onClick={() => setMostrarHistorico(!mostrarHistorico)}
       >
         <h2 className="text-lg font-semibold flex items-center">
-          <Zap className="mr-2" size={20} />
+          <ClipboardList className="mr-2" size={20} />
           Histórico de Ações
         </h2>
         {mostrarHistorico && historicoAcoes.length > 0 ? (
@@ -968,7 +995,6 @@ const ControleCaixaExpedicao = () => {
           mostrarHistorico && <p className="text-sm">Nenhuma ação registrada.</p>
         )}
       </div>
-
     </div>
   );
 };
