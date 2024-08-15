@@ -13,6 +13,28 @@ import { PiHamburgerFill } from "react-icons/pi";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Chart from 'chart.js/auto';
 
+// Componentes personalizados
+const FlipNumber = ({ value }) => (
+  <div className="flip-number">
+    {value.toString().split('').map((digit, index) => (
+      <div key={index} className="digit">
+        {digit}
+      </div>
+    ))}
+  </div>
+);
+
+const PanelCard = ({ icon, label, value, color }) => (
+  <div className={`p-4 rounded-lg shadow-md bg-${color}-100 hover:bg-${color}-200 transition-all duration-300`}>
+    <div className="flex items-center mb-2">
+      {icon}
+      <span className="ml-2 text-lg font-semibold text-gray-800">{label}</span>
+    </div>
+    <FlipNumber value={value} />
+  </div>
+);
+
+// Dados iniciais
 const opcionais = [
   { id: 1, nome: 'Sem alface' },
   { id: 2, nome: 'Sem maionese' },
@@ -58,14 +80,14 @@ const ResumoEvento = ({ historicoVendas, faturamentoTotal, exportarCSV, limparDa
   }, [historicoVendas]);
 
   return (
-    <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
-      <div className="flex justify-between items-center mb-3">
-        <h2 className="text-lg font-semibold">Resumo do Evento</h2>
+    <div className="bg-white p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800">Resumo do Evento</h2>
         <div className="flex space-x-2">
-          <button onClick={exportarCSV} className="p-1 rounded hover:bg-gray-200">
+          <button onClick={exportarCSV} className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition duration-300">
             <Download size={20} />
           </button>
-          <button onClick={limparDadosPersistidos} className="p-1 rounded hover:bg-gray-200">
+          <button onClick={limparDadosPersistidos} className="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition duration-300">
             Limpar Dados
           </button>
         </div>
@@ -74,13 +96,13 @@ const ResumoEvento = ({ historicoVendas, faturamentoTotal, exportarCSV, limparDa
       <div className="flex flex-wrap justify-between items-center">
         {produtos.map(produto => (
           <div key={produto.id} className="flex items-center mr-4 mb-2">
-            <span className="font-medium mr-2">{produto.nome}:</span>
-            <span className="bg-white px-2 py-1 rounded">{historicoVendas[produto.id] || 0}</span>
+            <span className="font-medium text-gray-700 mr-2">{produto.nome}:</span>
+            <span className="bg-gray-200 px-3 py-1 rounded-lg text-gray-800">{historicoVendas[produto.id] || 0}</span>
           </div>
         ))}
-        <div className="flex items-center">
-          <span className="font-medium mr-2">Faturamento:</span>
-          <span className="bg-white px-2 py-1 rounded font-bold">R$ {faturamentoTotal.toFixed(2)}</span>
+        <div className="flex items-center mt-4">
+          <span className="font-medium text-gray-700 mr-2">Faturamento:</span>
+          <span className="bg-green-100 px-3 py-1 rounded-lg font-bold text-green-800">R$ {faturamentoTotal.toFixed(2)}</span>
         </div>
       </div>
     </div>
@@ -127,7 +149,7 @@ const ControleCaixaExpedicao = () => {
     bordaPiscante: false,
     tempoBordaPiscante: 20
   });
-  const [mostrarConfig, setMostrarConfig] = useState(false);
+  const [mostrarConfig, setMostrarConfig] = useState(false); // Configurações da expedição
   const [mostrarHistorico, setMostrarHistorico] = useState(false); // Novo estado para controlar a visibilidade do histórico
 
   useEffect(() => {
@@ -477,14 +499,14 @@ const ControleCaixaExpedicao = () => {
 
   return (
     <div className="relative p-6 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-center">Controle de Caixa</h1>
+      <h1 className="text-4xl font-bold mb-10 text-center text-gray-800">Controle de Caixa</h1>
 
       <div className="flex justify-end mb-6 relative">
         <button
           onClick={handleToggleResumo}
-          className="p-1 rounded hover:bg-gray-200 relative z-10"
+          className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all duration-300"
         >
-          <Settings size={20} />
+          <Settings size={24} />
         </button>
 
         {mostrarInputSenha && (
@@ -494,10 +516,10 @@ const ControleCaixaExpedicao = () => {
                 type="password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                className="p-1 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="p-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 style={{ width: '150px' }}
               />
-              <button type="submit" className="p-2 bg-blue-500 text-white rounded text-sm">
+              <button type="submit" className="p-2 bg-blue-500 text-white rounded-lg text-sm">
                 Confirmar
               </button>
             </form>
@@ -514,29 +536,29 @@ const ControleCaixaExpedicao = () => {
         />
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-8">
         {produtos.map(produto => (
           <div
             key={produto.id}
-            className={`${produto.cor} p-2 rounded-lg shadow hover:shadow-md transition-shadow text-left border border-gray-200 cursor-pointer`}
+            className={`${produto.cor} p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow text-left border border-gray-300 cursor-pointer`}
             onClick={() => adicionarAoCarrinho(produto, [])}
           >
-            <h3 className="text-sm font-semibold flex items-center">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center">
               {produto.nome === 'KFT' && <GiHamburger className="mr-2" />}
               {produto.nome === 'Falafel' && <FaHamburger className="mr-2" />}
-              {produto.nome === 'Marys' && <PiHamburgerFill className="mr-2" style={{ fontSize: '1.05rem' }} />}
-              {produto.nome === 'Fritas' && <CiFries className="mr-2" style={{ fontSize: '1.25rem' }} />}
+              {produto.nome === 'Marys' && <PiHamburgerFill className="mr-2" style={{ fontSize: '1.2rem' }} />}
+              {produto.nome === 'Fritas' && <CiFries className="mr-2" style={{ fontSize: '1.4rem' }} />}
               {produto.nome}
             </h3>
-            <p className="text-gray-600 text-xs">R$ {produto.preco.toFixed(2)}</p>
+            <p className="text-gray-600 text-sm mt-1">R$ {produto.preco.toFixed(2)}</p>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 abrirModal(produto);
               }}
-              className="mt-2 p-1 bg-white text-black rounded"
+              className="mt-3 p-2 bg-white text-gray-800 rounded-lg hover:bg-gray-100 transition-all duration-300"
             >
-              <Edit3 size={16} />
+              <Edit3 size={18} />
             </button>
           </div>
         ))}
@@ -544,12 +566,12 @@ const ControleCaixaExpedicao = () => {
 
       {mostrarModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50 animate-fadeIn">
-          <div className="bg-white p-6 rounded-lg shadow-lg relative z-50 animate-fadeInUp">
-            <h2 className="text-lg font-bold mb-4">Opcionais para {produtoSelecionado?.nome}</h2>
-            <div className="mb-4">
+          <div className="bg-white p-8 rounded-lg shadow-lg relative z-50 animate-fadeInUp">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Opcionais para {produtoSelecionado?.nome}</h2>
+            <div className="mb-6">
               {opcionais.map(opcional => (
-                <div key={opcional.id} className="mb-2">
-                  <label className="flex items-center">
+                <div key={opcional.id} className="mb-4">
+                  <label className="flex items-center text-gray-700">
                     <input
                       type="checkbox"
                       value={opcional.nome}
@@ -568,13 +590,13 @@ const ControleCaixaExpedicao = () => {
             </div>
             <button
               onClick={() => adicionarAoCarrinho(produtoSelecionado, opcionaisSelecionados)}
-              className="p-2 bg-green-500 text-white rounded"
+              className="p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-300"
             >
               Confirmar
             </button>
             <button
               onClick={() => setMostrarModal(false)}
-              className="p-2 bg-red-500 text-white rounded ml-4"
+              className="p-3 bg-red-500 text-white rounded-lg ml-4 hover:bg-red-600 transition-all duration-300"
             >
               Cancelar
             </button>
@@ -582,64 +604,63 @@ const ControleCaixaExpedicao = () => {
         </div>
       )}
 
-      <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
-        <div className="flex justify-between items-center mb-2">
+      <div className="bg-white p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg mb-10">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
-            <h2 className="text-lg font-semibold flex items-center mr-4">
-              <ShoppingCart className="mr-2" size={20} />
+            <h2 className="text-xl font-bold text-gray-800 flex items-center mr-6">
+              <ShoppingCart className="mr-2" size={24} />
               Carrinho
             </h2>
             <input
               type="text"
               value={nomeCliente}
               onChange={(e) => setNomeCliente(e.target.value)}
-              className="ml-1 p-1.5 border border-gray-300 rounded-full text-sm w-36 text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="ml-2 p-2 border border-gray-300 rounded-lg text-sm w-40 text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Nome do cliente"
-              style={{ height: '28px' }}
             />
             <button
               onClick={togglePrioridade}
-              className={`ml-2 p-1 rounded ${pedidoPrioritario ? 'text-red-500' : ''}`}
+              className={`ml-4 p-2 rounded-full ${pedidoPrioritario ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-800'} hover:bg-red-500 hover:text-white transition-all duration-300`}
               title={pedidoPrioritario ? "Remover prioridade" : "Marcar como prioritário"}
             >
-              <AlertTriangle size={20} />
+              <AlertTriangle size={24} />
             </button>
           </div>
           <div className="flex space-x-2">
             <button
               onClick={apagarPedido}
-              className="p-1 rounded hover:bg-gray-200"
+              className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-300"
               title="Apagar Pedido"
             >
-              <Trash2 size={20} />
+              <Trash2 size={24} />
             </button>
           </div>
         </div>
 
-        <ul>
+        <ul className="mb-6">
           {Object.entries(carrinho).map(([chave, { nome, preco, qtd, opcionais }]) => (
-            <li key={chave} className="flex justify-between items-center mb-2">
+            <li key={chave} className="flex justify-between items-center mb-4">
               <div className="flex-1">
-                <span>{nome}</span>
+                <span className="font-medium text-gray-800">{nome}</span>
               </div>
               <div className="flex-1 text-center flex items-center justify-center">
                 <button
                   onClick={() => editarQuantidade(chave, -1)}
-                  className="p-1 rounded hover:bg-gray-200"
+                  className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all duration-300"
                 >
-                  <Minus size={16} />
+                  <Minus size={20} />
                 </button>
-                <span className="mx-2">x {qtd}</span>
+                <span className="mx-4 text-gray-700 font-semibold">x {qtd}</span>
                 <button
                   onClick={() => editarQuantidade(chave, 1)}
-                  className="p-1 rounded hover:bg-gray-200"
+                  className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all duration-300"
                 >
-                  <Plus size={16} />
+                  <Plus size={20} />
                 </button>
               </div>
               <div className="flex-1 text-right">
                 {opcionais.length > 0 && (
-                  <span className="text-xs text-gray-600">
+                  <span className="text-sm text-gray-600">
                     Opcionais: {opcionais.join(', ')}
                   </span>
                 )}
@@ -647,61 +668,61 @@ const ControleCaixaExpedicao = () => {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => editarOpcionais(chave)}
-                  className="p-1 rounded hover:bg-gray-200"
+                  className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all duration-300"
                 >
-                  <Edit3 size={16} />
+                  <Edit3 size={20} />
                 </button>
                 <button
                   onClick={() => removerItem(chave)}
-                  className="p-1 rounded hover:bg-gray-200"
+                  className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-300"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={20} />
                 </button>
               </div>
             </li>
           ))}
         </ul>
-        <div className="mt-4 text-right">
-          <p className="font-medium">Total de itens: {Object.keys(carrinho).length}</p>
-          <p className="text-lg font-bold">Total: R$ {calcularTotal(carrinho).toFixed(2)}</p>
-          <div className="flex justify-end">
+        <div className="text-right">
+          <p className="font-medium text-gray-700">Total de itens: {Object.keys(carrinho).length}</p>
+          <p className="text-2xl font-bold text-gray-800 mt-2">Total: R$ {calcularTotal(carrinho).toFixed(2)}</p>
+          <div className="flex justify-end mt-6">
             <button
               onClick={enviarParaProducao}
-              className="mt-4 p-2 bg-blue-500 text-white rounded flex items-center justify-center"
+              className="p-3 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition-all duration-300"
               disabled={Object.keys(carrinho).length === 0}
             >
               <span>Enviar Pedido</span>
-              <Send size={20} className="ml-2" />
+              <Send size={24} className="ml-2" />
             </button>
           </div>
         </div>
       </div>
 
-      <h1 className="text-3xl font-bold mb-6 text-center">Expedição</h1>
+      <h1 className="text-4xl font-bold mb-10 text-center text-gray-800">Expedição</h1>
 
-      <div className="relative bg-gray-300 p-6 rounded-lg shadow mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2">
-            <h2 className="text-lg font-semibold">Painel de Produção</h2>
+      <div className="relative bg-gray-200 p-6 rounded-lg shadow-md mb-8 transition-all duration-300 hover:shadow-lg">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-xl font-bold text-gray-800">Painel de Produção</h2>
             <button
               onClick={() => setMostrarConfig(!mostrarConfig)}
-              className="p-1 rounded hover:bg-gray-200"
+              className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all duration-300"
             >
-              <Settings size={20} />
+              <Settings size={24} />
             </button>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Pesquisar pedidos..."
-              className="p-2 rounded-md shadow-md"
+              className="p-2 rounded-lg shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
             />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="p-2 rounded-md shadow-md"
+              className="p-2 rounded-lg shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
             >
               <option value="todos">Todos</option>
               <option value="prioritario">Prioritário</option>
@@ -710,11 +731,11 @@ const ControleCaixaExpedicao = () => {
           </div>
         </div>
         {mostrarConfig && (
-          <div className="absolute left-0 top-0 mt-16 ml-0 bg-white p-4 rounded-lg shadow-lg z-20">
-            <h3 className="text-md font-semibold mb-3">Configurações de Expedição</h3>
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center space-x-4">
-                <label className="flex items-center space-x-2">
+          <div className="absolute left-0 top-0 mt-16 ml-0 bg-white p-6 rounded-lg shadow-lg z-20 animate-fadeInUp">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">Configurações de Expedição</h3>
+            <div className="flex flex-col space-y-6">
+              <div className="flex items-center space-x-6">
+                <label className="flex items-center text-gray-800">
                   <Switch
                     onChange={() => setConfigExpedicao(prev => ({ ...prev, subidaAutomatica: !prev.subidaAutomatica }))}
                     checked={configExpedicao.subidaAutomatica}
@@ -725,25 +746,25 @@ const ControleCaixaExpedicao = () => {
                     checkedIcon={false}
                     boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
                     activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
-                    height={16}
-                    width={38}
+                    height={20}
+                    width={44}
                   />
-                  <span>Subida automática após</span>
+                  <span className="ml-3">Subida automática após</span>
                 </label>
                 <input
                   type="number"
                   name="tempoSubida"
                   value={configExpedicao.tempoSubida}
                   onChange={handleConfigChange}
-                  className="p-1 border border-gray-300 rounded text-sm"
-                  style={{ width: '50px' }}
+                  className="p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                  style={{ width: '60px' }}
                   disabled={!configExpedicao.subidaAutomatica}
                 />
-                <span>minutos</span>
+                <span className="text-gray-800">minutos</span>
               </div>
 
-              <div className="flex items-center space-x-4">
-                <label className="flex items-center space-x-2">
+              <div className="flex items-center space-x-6">
+                <label className="flex items-center text-gray-800">
                   <Switch
                     onChange={() => setConfigExpedicao(prev => ({ ...prev, bordaPiscante: !prev.bordaPiscante }))}
                     checked={configExpedicao.bordaPiscante}
@@ -754,35 +775,46 @@ const ControleCaixaExpedicao = () => {
                     checkedIcon={false}
                     boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
                     activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
-                    height={16}
-                    width={38}
+                    height={20}
+                    width={44}
                   />
-                  <span>Borda piscante após</span>
+                  <span className="ml-3">Borda piscante após</span>
                 </label>
                 <input
                   type="number"
                   name="tempoBordaPiscante"
                   value={configExpedicao.tempoBordaPiscante}
                   onChange={handleConfigChange}
-                  className="p-1 border border-gray-300 rounded text-sm"
-                  style={{ width: '50px' }}
+                  className="p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                  style={{ width: '60px' }}
                   disabled={!configExpedicao.bordaPiscante}
                 />
-                <span>minutos</span>
+                <span className="text-gray-800">minutos</span>
               </div>
             </div>
           </div>
         )}
-        <div className="flex flex-wrap justify-between items-center">
-          {produtos.map(produto => (
-            <div key={produto.id} className="flex items-center mr-6 mb-4">
-              <span className="font-medium mr-2">{produto.nome}:</span>
-              <span className="bg-white px-2 py-1 rounded">{contadorFila[produto.nome] || 0}</span>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-6">
+          <PanelCard
+            icon={<ChefHat size={24} />}
+            label="Total de Itens"
+            value={Object.keys(contadorFila).reduce((total, key) => total + contadorFila[key], 0)}
+            color="blue"
+          />
+          <PanelCard
+            icon={<Clock size={24} />}
+            label="Tempo Médio na Fila"
+            value={(filaPedidos.length > 0 ? Math.round(filaPedidos.reduce((total, pedido) => total + (new Date().getTime() - new Date(pedido.horario).getTime()) / 60000, 0) / filaPedidos.length) : 0)}
+            color="green"
+          />
+          <PanelCard
+            icon={<AlertTriangle size={24} />}
+            label="Pedidos Prioritários"
+            value={filaPedidos.filter(p => p.prioritario).length}
+            color="red"
+          />
         </div>
       </div>
-
 
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="filaPedidos" direction="horizontal">
@@ -790,84 +822,81 @@ const ControleCaixaExpedicao = () => {
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="bg-gray-100 p-4 rounded-lg shadow mb-6 overflow-x-auto"
+              className="bg-white p-6 rounded-lg shadow-md mb-8 overflow-x-auto transition-all duration-300 hover:shadow-lg flex space-x-4"
             >
-              <h2 className="text-lg font-semibold mb-2 flex items-center">
-                <ChefHat className="mr-2" size={20} />
+              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <ChefHat className="mr-2" size={24} />
                 Fila de Pedidos
               </h2>
               {filteredPedidos.length === 0 ? (
-                <p>Nenhum pedido na fila.</p>
+                <p className="text-gray-700">Nenhum pedido na fila.</p>
               ) : (
-                <div className="flex space-x-4">
-                  {filteredPedidos.map((pedido, index) => {
-                    const tempoNaFila = (new Date().getTime() - new Date(pedido.horario).getTime()) / 60000;
-                    const isBordaPiscante = configExpedicao.bordaPiscante && tempoNaFila > configExpedicao.tempoBordaPiscante;
-                    return (
-                      <Draggable key={pedido.id} draggableId={`${pedido.id}`} index={index}>
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`flex-shrink-0 w-80 p-4 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'} ${isBordaPiscante ? 'animate-pulse border-4 border-red-500' : ''}`}
-                          >
-                            <div className="flex justify-between items-center mb-2">
-                              <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
-                              <div className="text-xs text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() => moverPedido(index, -1)}
-                                  className="p-1 rounded hover:bg-gray-200"
-                                  disabled={index === 0}
-                                >
-                                  <ArrowUp size={16} />
-                                </button>
-                                <button
-                                  onClick={() => moverPedido(index, 1)}
-                                  className="p-1 rounded hover:bg-gray-200"
-                                  disabled={index === filaPedidos.length - 1}
-                                >
-                                  <ArrowDown size={16} />
-                                </button>
-                                <button
-                                  onClick={() => togglePedidoOnHold(pedido)}
-                                  className="p-1 rounded hover:bg-gray-200"
-                                  title="Colocar em espera"
-                                >
-                                  <Pause size={16} />
-                                </button>
-                                <button
-                                  onClick={() => removerPedido(pedido.id)}
-                                  className="p-1 rounded hover:bg-gray-200"
-                                  title="Pedido entregue"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                {pedido.subidaAutomatica && <Clock className="text-red-500" size={16} />}
-                              </div>
+                filteredPedidos.map((pedido, index) => {
+                  const tempoNaFila = (new Date().getTime() - new Date(pedido.horario).getTime()) / 60000;
+                  const isBordaPiscante = configExpedicao.bordaPiscante && tempoNaFila > configExpedicao.tempoBordaPiscante;
+                  return (
+                    <Draggable key={pedido.id} draggableId={`${pedido.id}`} index={index}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className={`flex-shrink-0 w-80 p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ${pedido.prioritario ? 'bg-red-100' : 'bg-white'} ${isBordaPiscante ? 'animate-pulse border-4 border-red-500' : ''}`}
+                        >
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-gray-800">{pedido.cliente} #{pedido.id}</h3>
+                            <div className="text-sm text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => moverPedido(index, -1)}
+                                className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all duration-300"
+                                disabled={index === 0}
+                              >
+                                <ArrowUp size={20} />
+                              </button>
+                              <button
+                                onClick={() => moverPedido(index, 1)}
+                                className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all duration-300"
+                                disabled={index === filaPedidos.length - 1}
+                              >
+                                <ArrowDown size={20} />
+                              </button>
+                              <button
+                                onClick={() => togglePedidoOnHold(pedido)}
+                                className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all duration-300"
+                                title="Colocar em espera"
+                              >
+                                <Pause size={20} />
+                              </button>
+                              <button
+                                onClick={() => removerPedido(pedido.id)}
+                                className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-300"
+                                title="Pedido entregue"
+                              >
+                                <Check size={20} />
+                              </button>
+                              {pedido.subidaAutomatica && <Clock className="text-red-500" size={20} />}
                             </div>
-                            <ul>
-                              {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
-                                <li key={id} className="flex justify-between items-center mb-2">
-                                  <div className="flex-1">
-                                    <span>{nome} x {qtd}</span>
-                                  </div>
-                                  {opcionais && opcionais.length > 0 && (
-                                    <div className="flex-1 text-right text-xs text-gray-600">
-                                      Opcionais: {opcionais.join(', ')}
-                                    </div>
-                                  )}
-                                </li>
-                              ))}
-                            </ul>
                           </div>
-                        )}
-                      </Draggable>
-                    );
-                  })}
-                </div>
-              )}
+                          <ul>
+                            {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
+                              <li key={id} className="flex justify-between items-center mb-4">
+                                <div className="flex-1">
+                                  <span className="text-gray-800 font-medium">{nome} x {qtd}</span>
+                                </div>
+                                {opcionais && opcionais.length > 0 && (
+                                  <div className="flex-1 text-right text-sm text-gray-600">
+                                    Opcionais: {opcionais.join(', ')}
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </Draggable>
+                  );
+                }))}
               {provided.placeholder}
             </div>
           )}
@@ -875,45 +904,45 @@ const ControleCaixaExpedicao = () => {
       </DragDropContext>
 
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
-          <h2 className="text-lg font-semibold mb-2 flex items-center">
-            <Pause className="mr-2" size={20} />
+        <div className="bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-64 transition-all duration-300 hover:shadow-lg">
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <Pause className="mr-2" size={24} />
             Pedidos em Espera
           </h2>
           {pedidosOnHold.length === 0 ? (
-            <p>Nenhum pedido em espera.</p>
+            <p className="text-gray-700">Nenhum pedido em espera.</p>
           ) : (
             <ul>
               {pedidosOnHold.map((pedido) => (
-                <li key={pedido.id} className="mb-4 p-3 bg-blue-100 rounded-lg shadow">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
-                    <div className="text-xs text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
+                <li key={pedido.id} className="mb-4 p-4 bg-blue-100 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-gray-800">{pedido.cliente} #{pedido.id}</h3>
+                    <div className="text-sm text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
                     <div className="flex space-x-2">
                       <button
                         onClick={() => moverParaEsquecidos(pedido)}
-                        className="p-1 rounded hover:bg-yellow-200"
+                        className="p-2 rounded-full bg-yellow-300 hover:bg-yellow-400 transition-all duration-300"
                         title="Mover para Esquecidos"
                       >
-                        <Zap size={16} />
+                        <Zap size={20} />
                       </button>
                       <button
                         onClick={() => removerPedido(pedido.id)}
-                        className="p-1 rounded hover:bg-gray-200"
+                        className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-300"
                         title="Pedido entregue"
                       >
-                        <Check size={16} />
+                        <Check size={20} />
                       </button>
                     </div>
                   </div>
                   <ul>
                     {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
-                      <li key={id} className="flex justify-between items-center mb-2">
+                      <li key={id} className="flex justify-between items-center mb-4">
                         <div className="flex-1">
-                          <span>{nome} x {qtd}</span>
+                          <span className="text-gray-800 font-medium">{nome} x {qtd}</span>
                         </div>
                         {opcionais && opcionais.length > 0 && (
-                          <div className="flex-1 text-right text-xs text-gray-600">
+                          <div className="flex-1 text-right text-sm text-gray-600">
                             Opcionais: {opcionais.join(', ')}
                           </div>
                         )}
@@ -926,36 +955,36 @@ const ControleCaixaExpedicao = () => {
           )}
         </div>
 
-        <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
-          <h2 className="text-lg font-semibold mb-2 flex items-center">
-            <Zap className="mr-2" size={20} />
+        <div className="bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-64 transition-all duration-300 hover:shadow-lg">
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <Zap className="mr-2" size={24} />
             Esqueceram de Mim
           </h2>
           {esquecidos.length === 0 ? (
-            <p>Nenhum pedido esquecido.</p>
+            <p className="text-gray-700">Nenhum pedido esquecido.</p>
           ) : (
             <ul>
               {esquecidos.map((pedido) => (
-                <li key={pedido.id} className="mb-4 p-3 bg-yellow-100 rounded-lg shadow">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
-                    <div className="text-xs text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
+                <li key={pedido.id} className="mb-4 p-4 bg-yellow-100 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-gray-800">{pedido.cliente} #{pedido.id}</h3>
+                    <div className="text-sm text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
                     <button
                       onClick={() => removerPedido(pedido.id)}
-                      className="p-1 rounded hover:bg-gray-200"
+                      className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-300"
                       title="Pedido entregue"
                     >
-                      <Check size={16} />
+                      <Check size={20} />
                     </button>
                   </div>
                   <ul>
                     {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
-                      <li key={id} className="flex justify-between items-center mb-2">
+                      <li key={id} className="flex justify-between items-center mb-4">
                         <div className="flex-1">
-                          <span>{nome} x {qtd}</span>
+                          <span className="text-gray-800 font-medium">{nome} x {qtd}</span>
                         </div>
                         {opcionais && opcionais.length > 0 && (
-                          <div className="flex-1 text-right text-xs text-gray-600">
+                          <div className="flex-1 text-right text-sm text-gray-600">
                             Opcionais: {opcionais.join(', ')}
                           </div>
                         )}
@@ -971,28 +1000,30 @@ const ControleCaixaExpedicao = () => {
 
       {/* Histórico de Ações com scroll interno condicional */}
       <div
-        className={`bg-gray-100 px-4 rounded-lg shadow mt-6 cursor-pointer transition-all duration-300 ease-in-out w-1/2 ${
-          mostrarHistorico ? 'max-h-64 overflow-y-auto py-4' : 'max-h-10 py-2 flex items-center'
+        className={`bg-white p-6 rounded-lg shadow-md mt-10 cursor-pointer transition-all duration-300 ease-in-out ${
+          mostrarHistorico ? 'max-h-64 overflow-y-auto py-4' : 'max-h-14 py-2 flex items-center'
         }`}
         onClick={() => setMostrarHistorico(!mostrarHistorico)}
       >
-        <h2 className="text-lg font-semibold flex items-center">
-          <ClipboardList className="mr-2" size={20} />
+        <h2 className="text-xl font-bold text-gray-800 flex items-center">
+          <ClipboardList className="mr-2" size={24} />
           Histórico de Ações
         </h2>
         {mostrarHistorico && historicoAcoes.length > 0 ? (
-          <ul>
+          <ul className="mt-4">
             {historicoAcoes.map((acao, index) => (
               <li
                 key={index}
-                className={`mb-2 p-2 bg-white rounded-lg shadow text-sm ${index === 0 ? 'mt-2' : ''}`}
+                className={`mb-2 p-4 bg-gray-100 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 text-sm ${
+                  index === 0 ? 'mt-2' : ''
+                }`}
               >
                 {acao}
               </li>
             ))}
           </ul>
         ) : (
-          mostrarHistorico && <p className="text-sm">Nenhuma ação registrada.</p>
+          mostrarHistorico && <p className="text-sm text-gray-700 mt-4">Nenhuma ação registrada.</p>
         )}
       </div>
     </div>
