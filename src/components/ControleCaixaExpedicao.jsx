@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ShoppingCart, Edit3, Trash2, Plus, Minus, ChefHat, ArrowUp, ArrowDown,
-  Pause, Check, Zap, AlertTriangle, Download, Settings, Send, Clock
+  Pause, Check, Zap, AlertTriangle, Download, Settings, Send, Clock, Filter, Search
 } from 'lucide-react';
-import Switch from "react-switch"; // Importando react-switch para os toggles
+import Switch from "react-switch";
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
 import { CiFries } from "react-icons/ci";
 import { FaHamburger } from "react-icons/fa";
 import { GiHamburger } from "react-icons/gi";
-import { PiHamburgerFill } from "react-icons/pi"; // Novo ícone para Marys
+import { PiHamburgerFill } from "react-icons/pi";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import Chart from 'chart.js/auto';
 
 const opcionais = [
   { id: 1, nome: 'Sem alface' },
@@ -26,6 +28,35 @@ const produtos = [
 ];
 
 const ResumoEvento = ({ historicoVendas, faturamentoTotal, exportarCSV, limparDadosPersistidos }) => {
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    const ctx = chartRef.current.getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: produtos.map(p => p.nome),
+        datasets: [{
+          label: 'Vendas',
+          data: produtos.map(p => historicoVendas[p.id] || 0),
+          backgroundColor: produtos.map(p => p.cor.replace('bg-', '').replace('-', ''))
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    return () => {
+      chart.destroy();
+    };
+  }, [historicoVendas]);
+
   return (
     <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
       <div className="flex justify-between items-center mb-3">
@@ -39,6 +70,7 @@ const ResumoEvento = ({ historicoVendas, faturamentoTotal, exportarCSV, limparDa
           </button>
         </div>
       </div>
+      <canvas id="vendasChart" ref={chartRef} className="mb-4" style={{ maxHeight: '200px', width: '100%' }}></canvas>
       <div className="flex flex-wrap justify-between items-center">
         {produtos.map(produto => (
           <div key={produto.id} className="flex items-center mr-4 mb-2">
@@ -82,13 +114,18 @@ const ControleCaixaExpedicao = () => {
   const [senha, setSenha] = useState('');
   const [senhaCorreta, setSenhaCorreta] = useState(false);
   const [mostrarInputSenha, setMostrarInputSenha] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('todos');
+
+  // Histórico de ações
+  const [historicoAcoes, setHistoricoAcoes] = useState([]);
 
   // Configurações das features
   const [configExpedicao, setConfigExpedicao] = useState({
     subidaAutomatica: false,
-    tempoSubida: 15, // tempo em minutos
+    tempoSubida: 15,
     bordaPiscante: false,
-    tempoBordaPiscante: 20 // tempo em minutos
+    tempoBordaPiscante: 20
   });
   const [mostrarConfig, setMostrarConfig] = useState(false);
 
@@ -120,13 +157,13 @@ const ControleCaixaExpedicao = () => {
     }, 0);
   };
 
-  const faturamentoTotal = calcularFaturamentoTotal(); // Definindo faturamentoTotal corretamente
+  const faturamentoTotal = calcularFaturamentoTotal();
 
   useEffect(() => {
     if (configExpedicao.subidaAutomatica) {
       const intervalo = setInterval(() => {
         verificarSubidaAutomatica();
-      }, 60000); // verifica a cada minuto
+      }, 60000);
       return () => clearInterval(intervalo);
     }
   }, [filaPedidos, configExpedicao]);
@@ -160,29 +197,29 @@ const ControleCaixaExpedicao = () => {
     const chaveProduto = `${produto.id}-${opcionais.join('-')}`;
 
     setCarrinho(prev => {
-        if (editandoItem) {
-            return {
-                ...prev,
-                [editandoItem]: {
-                    ...prev[editandoItem],
-                    opcionais: [...opcionais]
-                },
-            };
-        } else {
-            return {
-                ...prev,
-                [chaveProduto]: {
-                    ...produto,
-                    qtd: (prev[chaveProduto]?.qtd || 0) + 1,
-                    opcionais: [...opcionais],
-                },
-            };
-        }
+      if (editandoItem) {
+        return {
+          ...prev,
+          [editandoItem]: {
+            ...prev[editandoItem],
+            opcionais: [...opcionais]
+          },
+        };
+      } else {
+        return {
+          ...prev,
+          [chaveProduto]: {
+            ...produto,
+            qtd: (prev[chaveProduto]?.qtd || 0) + 1,
+            opcionais: [...opcionais],
+          },
+        };
+      }
     });
 
     setMostrarModal(false);
     setEditandoItem(null);
-};
+  };
 
   const abrirModal = (produto) => {
     setProdutoSelecionado(produto);
@@ -254,9 +291,11 @@ const ControleCaixaExpedicao = () => {
       return novoHistorico;
     });
 
+    setHistoricoAcoes(prev => [...prev, `Pedido #${numeroPedido} enviado para produção`]);
+
     setCarrinho({});
     setPedidoPrioritario(false);
-    setNomeCliente(''); // Limpa o campo do nome do cliente
+    setNomeCliente('');
   };
 
   const calcularTotal = (itens) => {
@@ -271,16 +310,13 @@ const ControleCaixaExpedicao = () => {
     }, 0);
   };
 
-  const moverPedido = (index, direcao) => {
-    const novosPedidos = [...filaPedidos];
-    const pedido = novosPedidos[index];
-    const novoIndex = index + direcao;
+  const moverPedido = (sourceIndex, destinationIndex) => {
+    const novosPedidos = Array.from(filaPedidos);
+    const [movedPedido] = novosPedidos.splice(sourceIndex, 1);
+    novosPedidos.splice(destinationIndex, 0, movedPedido);
 
-    if (novoIndex >= 0 && novoIndex < novosPedidos.length) {
-      novosPedidos.splice(index, 1);
-      novosPedidos.splice(novoIndex, 0, pedido);
-      setFilaPedidos(novosPedidos);
-    }
+    setFilaPedidos(novosPedidos);
+    setHistoricoAcoes(prev => [...prev, `Pedido #${movedPedido.id} movido na fila`]);
   };
 
   const togglePedidoOnHold = (pedido) => {
@@ -291,21 +327,25 @@ const ControleCaixaExpedicao = () => {
       setPedidosOnHold(prev => prev.filter(p => p.id !== pedido.id));
       setFilaPedidos(prev => [...prev, pedido]);
     }
+    setHistoricoAcoes(prev => [...prev, `Pedido #${pedido.id} colocado em espera`]);
   };
 
   const moverParaEsquecidos = (pedido) => {
     setPedidosOnHold(prev => prev.filter(p => p.id !== pedido.id));
     setEsquecidos(prev => [...prev, pedido]);
+    setHistoricoAcoes(prev => [...prev, `Pedido #${pedido.id} movido para esquecidos`]);
   };
 
   const removerPedido = (id) => {
     setFilaPedidos(prev => prev.filter(pedido => pedido.id !== id));
     setPedidosOnHold(prev => prev.filter(pedido => pedido.id !== id));
     setEsquecidos(prev => prev.filter(pedido => pedido.id !== id));
+    setHistoricoAcoes(prev => [...prev, `Pedido #${id} removido da fila`]);
   };
 
   const togglePrioridade = () => {
     setPedidoPrioritario(!pedidoPrioritario);
+    setHistoricoAcoes(prev => [...prev, `Pedido marcado como ${pedidoPrioritario ? 'normal' : 'prioritário'}`]);
   };
 
   const exportarCSV = () => {
@@ -361,6 +401,7 @@ const ControleCaixaExpedicao = () => {
       setFilaPedidos([]);
       setHistoricoVendas({});
       setNumeroPedido(1);
+      setHistoricoAcoes(prev => [...prev, 'Todos os dados persistidos foram limpos']);
     }
   };
 
@@ -382,32 +423,58 @@ const ControleCaixaExpedicao = () => {
     }));
   };
 
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    moverPedido(result.source.index, result.destination.index);
+  };
+
+  const filteredPedidos = filaPedidos.filter(pedido => {
+    const matchSearch = pedido.cliente.toLowerCase().includes(searchTerm.toLowerCase());
+    if (filterStatus === 'todos') return matchSearch;
+    if (filterStatus === 'prioritario') return matchSearch && pedido.prioritario;
+    if (filterStatus === 'normal') return matchSearch && !pedido.prioritario;
+    return true;
+  });
+
+  const handleToggleResumo = () => {
+    if (mostrarResumo) {
+      setSenhaCorreta(false);
+      setMostrarResumo(false);
+      setMostrarInputSenha(false);
+      setSenha('');
+    } else {
+      setMostrarInputSenha(!mostrarInputSenha);
+    }
+  };
+
   return (
     <div className="relative p-6 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center">Controle de Caixa</h1>
 
       <div className="flex justify-end mb-6 relative">
         <button
-          onClick={() => setMostrarInputSenha(!mostrarInputSenha)}
+          onClick={handleToggleResumo}
           className="p-1 rounded hover:bg-gray-200 relative z-10"
         >
           <Settings size={20} />
         </button>
 
-        <div className={`absolute top-0 right-0 transition-all duration-300 transform ${mostrarInputSenha ? 'opacity-100 translate-x-[-70px]' : 'opacity-0 translate-x-full'}`}>
-          <form onSubmit={handleSenhaSubmit} className="flex items-center space-x-2">
-            <input
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              className="p-1 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              style={{ width: '150px' }}
-            />
-            <button type="submit" className="p-2 bg-blue-500 text-white rounded text-sm">
-              Confirmar
-            </button>
-          </form>
-        </div>
+        {mostrarInputSenha && (
+          <div className={`absolute top-0 right-0 transition-all duration-300 transform ${mostrarInputSenha ? 'opacity-100 translate-x-[-70px]' : 'opacity-0 translate-x-full'}`}>
+            <form onSubmit={handleSenhaSubmit} className="flex items-center space-x-2">
+              <input
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                className="p-1 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                style={{ width: '150px' }}
+              />
+              <button type="submit" className="p-2 bg-blue-500 text-white rounded text-sm">
+                Confirmar
+              </button>
+            </form>
+          </div>
+        )}
       </div>
 
       {mostrarResumo && senhaCorreta && (
@@ -448,8 +515,8 @@ const ControleCaixaExpedicao = () => {
       </div>
 
       {mostrarModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg relative z-50">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50 animate-fadeIn">
+          <div className="bg-white p-6 rounded-lg shadow-lg relative z-50 animate-fadeInUp">
             <h2 className="text-lg font-bold mb-4">Opcionais para {produtoSelecionado?.nome}</h2>
             <div className="mb-4">
               {opcionais.map(opcional => (
@@ -587,6 +654,24 @@ const ControleCaixaExpedicao = () => {
       <div className="relative bg-gray-300 p-4 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold mb-3">Painel de Produção</h2>
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Pesquisar pedidos..."
+              className="p-2 rounded-md shadow-md"
+            />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="p-2 rounded-md shadow-md"
+            >
+              <option value="todos">Todos</option>
+              <option value="prioritario">Prioritário</option>
+              <option value="normal">Normal</option>
+            </select>
+          </div>
         </div>
 
         <button
@@ -671,78 +756,95 @@ const ControleCaixaExpedicao = () => {
         </div>
       </div>
 
-      <div className="bg-gray-100 p-4 rounded-lg shadow mb-6 overflow-x-auto">
-        <h2 className="text-lg font-semibold mb-2 flex items-center">
-          <ChefHat className="mr-2" size={20} />
-          Fila de Pedidos
-        </h2>
-        {filaPedidos.length === 0 ? (
-          <p>Nenhum pedido na fila.</p>
-        ) : (
-          <div className="flex space-x-4">
-            {filaPedidos.map((pedido, index) => {
-              const tempoNaFila = (new Date().getTime() - new Date(pedido.horario).getTime()) / 60000;
-              const isBordaPiscante = configExpedicao.bordaPiscante && tempoNaFila > configExpedicao.tempoBordaPiscante;
-              return (
-                <div
-                  key={pedido.id}
-                  className={`flex-shrink-0 w-80 p-4 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'} ${isBordaPiscante ? 'animate-pulse border-4 border-red-500' : ''}`}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
-                    <div className="text-xs text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => moverPedido(index, -1)}
-                        className="p-1 rounded hover:bg-gray-200"
-                        disabled={index === 0}
-                      >
-                        <ArrowUp size={16} />
-                      </button>
-                      <button
-                        onClick={() => moverPedido(index, 1)}
-                        className="p-1 rounded hover:bg-gray-200"
-                        disabled={index === filaPedidos.length - 1}
-                      >
-                        <ArrowDown size={16} />
-                      </button>
-                      <button
-                        onClick={() => togglePedidoOnHold(pedido)}
-                        className="p-1 rounded hover:bg-gray-200"
-                        title="Colocar em espera"
-                      >
-                        <Pause size={16} />
-                      </button>
-                      <button
-                        onClick={() => removerPedido(pedido.id)}
-                        className="p-1 rounded hover:bg-gray-200"
-                        title="Pedido entregue"
-                      >
-                        <Check size={16} />
-                      </button>
-                      {pedido.subidaAutomatica && <Clock className="text-red-500" size={16} />}
-                    </div>
-                  </div>
-                  <ul>
-                    {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
-                      <li key={id} className="flex justify-between items-center mb-2">
-                        <div className="flex-1">
-                          <span>{nome} x {qtd}</span>
-                        </div>
-                        {opcionais && opcionais.length > 0 && (
-                          <div className="flex-1 text-right text-xs text-gray-600">
-                            Opcionais: {opcionais.join(', ')}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="filaPedidos" direction="horizontal">
+          {(provided) => (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="bg-gray-100 p-4 rounded-lg shadow mb-6 overflow-x-auto"
+            >
+              <h2 className="text-lg font-semibold mb-2 flex items-center">
+                <ChefHat className="mr-2" size={20} />
+                Fila de Pedidos
+              </h2>
+              {filteredPedidos.length === 0 ? (
+                <p>Nenhum pedido na fila.</p>
+              ) : (
+                <div className="flex space-x-4">
+                  {filteredPedidos.map((pedido, index) => {
+                    const tempoNaFila = (new Date().getTime() - new Date(pedido.horario).getTime()) / 60000;
+                    const isBordaPiscante = configExpedicao.bordaPiscante && tempoNaFila > configExpedicao.tempoBordaPiscante;
+                    return (
+                      <Draggable key={pedido.id} draggableId={`${pedido.id}`} index={index}>
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={`flex-shrink-0 w-80 p-4 rounded-lg shadow ${pedido.prioritario ? 'bg-red-100' : 'bg-white'} ${isBordaPiscante ? 'animate-pulse border-4 border-red-500' : ''}`}
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <h3 className="font-medium">{pedido.cliente} #{pedido.id}</h3>
+                              <div className="text-xs text-gray-500">{new Date(pedido.horario).toLocaleTimeString()}</div>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => moverPedido(index, -1)}
+                                  className="p-1 rounded hover:bg-gray-200"
+                                  disabled={index === 0}
+                                >
+                                  <ArrowUp size={16} />
+                                </button>
+                                <button
+                                  onClick={() => moverPedido(index, 1)}
+                                  className="p-1 rounded hover:bg-gray-200"
+                                  disabled={index === filaPedidos.length - 1}
+                                >
+                                  <ArrowDown size={16} />
+                                </button>
+                                <button
+                                  onClick={() => togglePedidoOnHold(pedido)}
+                                  className="p-1 rounded hover:bg-gray-200"
+                                  title="Colocar em espera"
+                                >
+                                  <Pause size={16} />
+                                </button>
+                                <button
+                                  onClick={() => removerPedido(pedido.id)}
+                                  className="p-1 rounded hover:bg-gray-200"
+                                  title="Pedido entregue"
+                                >
+                                  <Check size={16} />
+                                </button>
+                                {pedido.subidaAutomatica && <Clock className="text-red-500" size={16} />}
+                              </div>
+                            </div>
+                            <ul>
+                              {Object.entries(pedido.itens).map(([id, { nome, qtd, opcionais }]) => (
+                                <li key={id} className="flex justify-between items-center mb-2">
+                                  <div className="flex-1">
+                                    <span>{nome} x {qtd}</span>
+                                  </div>
+                                  {opcionais && opcionais.length > 0 && (
+                                    <div className="flex-1 text-right text-xs text-gray-600">
+                                      Opcionais: {opcionais.join(', ')}
+                                    </div>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
-                      </li>
-                    ))}
-                  </ul>
+                      </Draggable>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              )}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
@@ -837,6 +939,24 @@ const ControleCaixaExpedicao = () => {
             </ul>
           )}
         </div>
+      </div>
+
+      <div className="bg-gray-100 p-4 rounded-lg shadow overflow-y-auto" style={{ maxHeight: '200px' }}>
+        <h2 className="text-lg font-semibold mb-2 flex items-center">
+          <Zap className="mr-2" size={20} />
+          Histórico de Ações
+        </h2>
+        {historicoAcoes.length === 0 ? (
+          <p>Nenhuma ação registrada.</p>
+        ) : (
+          <ul>
+            {historicoAcoes.map((acao, index) => (
+              <li key={index} className="mb-2 p-2 bg-white rounded-lg shadow">
+                {acao}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
